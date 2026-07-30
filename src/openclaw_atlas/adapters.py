@@ -151,7 +151,8 @@ class AnthropicMessagesAdapter:
         environment: FakeToolEnvironment = FakeToolEnvironment(task)
         events: list[TraceEvent] = []
         messages: list[dict[str, Any]] = [{"role": "user", "content": task.prompt}]
-        sequence, next_step = 0, 0
+        sequence = 0
+        consumed: set[int] = set()
         catalog = _unique_steps([*task.workflow, *task.tool_catalog])
         canonical = _wire_names(catalog)
         tools = [_tool_definition(step) for step in catalog]
@@ -211,7 +212,7 @@ class AnthropicMessagesAdapter:
                 tool = canonical.get(str(call.name), str(call.name))
                 arguments = dict(getattr(call, "input", {}) or {})
                 try:
-                    step_index = _find_step(task, tool, next_step)
+                    step_index = _find_step(task, tool, consumed)
                 except ValueError:
                     events.extend(
                         [
@@ -260,7 +261,7 @@ class AnthropicMessagesAdapter:
                     )
                     output = {"ok": False, "error": "argument_mismatch"}
                 else:
-                    next_step = max(next_step, step_index + 1)
+                    consumed.add(step_index)
                     try:
                         result = environment.call(step_index, step)
                         events.append(
@@ -430,8 +431,15 @@ def _json_type(value: Any) -> str:
     return "string"
 
 
-def _find_step(task: TaskSpec, tool: str, start: int) -> int:
-    for index in range(start, len(task.workflow)):
-        if task.workflow[index].tool == tool:
+def _find_step(task: TaskSpec, tool: str, consumed: set[int]) -> int:
+    """First step matching ``tool`` that has not been satisfied yet.
+
+    Declaration order is not an instruction to the model — nothing in a task
+    says the workflow must be walked front to back, and a real agent routinely
+    reorders independent calls. Matching any unconsumed step keeps that legal
+    while still refusing to satisfy the same step twice.
+    """
+    for index, step in enumerate(task.workflow):
+        if step.tool == tool and index not in consumed:
             return index
     raise ValueError(f"model called undeclared tool {tool!r}")

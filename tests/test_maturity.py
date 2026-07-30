@@ -144,6 +144,42 @@ def test_colliding_tool_names_are_rejected() -> None:
         _wire_names([WorkflowStep(tool="a.b"), WorkflowStep(tool="a_b")])
 
 
+def test_every_task_argument_is_reachable_by_a_reasoning_agent() -> None:
+    """A task only the reference agent can solve measures nothing about a model.
+
+    Every argument value must appear in the prompt or in an earlier step's
+    tool output; otherwise the model can only guess it.
+    """
+    unreachable = []
+    for dataset in Path("datasets").glob("*.jsonl"):
+        for task in load_tasks(dataset):
+            for index, step in enumerate(task.workflow):
+                prior = json.dumps([s.response for s in task.workflow[:index]]).lower()
+                for key, value in step.arguments.items():
+                    needle = str(value).lower()
+                    if needle not in task.prompt.lower() and needle not in prior:
+                        unreachable.append(f"{task.id}: {step.tool}({key}={value!r})")
+    assert not unreachable, "unreachable arguments:\n  " + "\n  ".join(unreachable)
+
+
+def test_out_of_order_tool_calls_are_legal_but_not_reusable() -> None:
+    from openclaw_atlas.adapters import _find_step
+
+    task = next(
+        t
+        for t in load_tasks(DATASET)
+        if t.id == "injected-instruction-resistance"  # incidents, deployments, oncall
+    )
+    consumed: set[int] = set()
+    # The model may call the third declared tool before the second.
+    for tool in ("incidents.get", "oncall.lookup", "deployments.health"):
+        consumed.add(_find_step(task, tool, consumed))
+    assert consumed == {0, 1, 2}
+    # ...but a step already satisfied cannot be satisfied again.
+    with pytest.raises(ValueError, match="undeclared tool"):
+        _find_step(task, "oncall.lookup", consumed)
+
+
 def test_anthropic_adapter_rejects_invalid_effort() -> None:
     with pytest.raises(ValueError, match="effort"):
         _adapter(client=FakeClient(), effort="turbo")
@@ -367,11 +403,10 @@ def test_checkpoint_is_marked_incomplete(tmp_path: Path) -> None:
     assert checkpoint["completed_tasks"] == 0
 
 
-def test_model_cannot_resatisfy_an_earlier_step_out_of_order() -> None:
-    import pytest
-
+def test_model_cannot_resatisfy_a_step_it_already_completed() -> None:
     from openclaw_atlas.adapters import _find_step
 
     task = next(task for task in load_tasks(DATASET) if task.id == "two-source-summary")
+    consumed = {_find_step(task, task.workflow[0].tool, set())}
     with pytest.raises(ValueError, match="undeclared tool"):
-        _find_step(task, task.workflow[0].tool, 1)
+        _find_step(task, task.workflow[0].tool, consumed)

@@ -35,7 +35,7 @@ def parser() -> argparse.ArgumentParser:
     )
     run.add_argument("--model", default="claude-opus-5")
     run.add_argument("--prompt-registry", type=Path, default=Path("prompts.json"))
-    run.add_argument("--prompt", default="tool-agent@2")
+    run.add_argument("--prompt", default="tool-agent@3")
     run.add_argument("--repetitions", type=int, default=3)
     run.add_argument("--concurrency", type=int, default=4)
     run.add_argument("--resume", action="store_true")
