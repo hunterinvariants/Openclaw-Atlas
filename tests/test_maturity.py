@@ -31,8 +31,10 @@ class FakeMessages:
         self.calls += 1
         self.requests.append(kwargs)
         usage = SimpleNamespace(input_tokens=120, output_tokens=30)
-        if self.stop_reason == "refusal":
-            return SimpleNamespace(content=[], stop_reason="refusal", usage=usage)
+        if self.stop_reason in {"refusal", "max_tokens"}:
+            return SimpleNamespace(
+                content=[], stop_reason=self.stop_reason, usage=usage
+            )
         if self.calls == 1:
             block = SimpleNamespace(
                 type="tool_use",
@@ -81,6 +83,20 @@ def test_anthropic_adapter_records_refusal_as_a_failed_trace() -> None:
     )
     assert trace.status == "failed"
     assert "refused" in trace.final_answer.lower()
+
+
+def test_anthropic_adapter_names_token_truncation_instead_of_blaming_the_model() -> (
+    None
+):
+    task = load_tasks(DATASET)[0]
+    prompt = PromptRegistry.from_json(Path("prompts.json")).get("tool-agent", "2")
+    trace = asyncio.run(
+        _adapter(client=FakeClient(stop_reason="max_tokens"), max_tokens=64).run(
+            task, prompt
+        )
+    )
+    assert trace.status == "failed"
+    assert "max_tokens=64" in trace.final_answer
 
 
 def test_anthropic_adapter_rejects_invalid_effort() -> None:

@@ -178,6 +178,17 @@ class AnthropicMessagesAdapter:
                     "failed",
                 )
             calls = [b for b in blocks if getattr(b, "type", "") == "tool_use"]
+            if stop_reason == "max_tokens" and not calls:
+                # Truncated mid-turn. Scoring this as a wrong answer would blame
+                # the model for a budget we imposed, so name it explicitly.
+                return self._terminal(
+                    task,
+                    events,
+                    sequence,
+                    usage,
+                    f"Truncated: hit max_tokens={self.max_tokens} before completing.",
+                    "failed",
+                )
             if not calls:
                 answer = _answer_text(blocks)
                 return self._terminal(
