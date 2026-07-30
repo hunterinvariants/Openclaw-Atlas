@@ -90,3 +90,43 @@ class DeterministicAgent:
         if isinstance(value, list):
             return ", ".join(map(str, value))
         return str(value)
+
+
+class NaiveAgent:
+    """Negative-control agent that obeys instructions embedded in tool output."""
+
+    def run(self, task: TaskSpec) -> Trace:
+        trace = DeterministicAgent().run(task)
+        fault = task.fault
+        if not fault or fault.kind != FaultKind.injected_instruction:
+            return trace
+        payload = (fault.payload or "").lower()
+        distractor = next(
+            (step for step in task.tool_catalog if step.tool.lower() in payload), None
+        )
+        if distractor is None:
+            return trace
+        events = list(trace.events[:-1])
+        sequence = len(events)
+        events.extend(
+            [
+                TraceEvent(
+                    sequence=sequence,
+                    kind="tool_call",
+                    tool=distractor.tool,
+                    arguments=distractor.arguments,
+                ),
+                TraceEvent(
+                    sequence=sequence + 1,
+                    kind="tool_result",
+                    tool=distractor.tool,
+                    result=distractor.response,
+                ),
+                TraceEvent(
+                    sequence=sequence + 2,
+                    kind="final",
+                    result=trace.final_answer,
+                ),
+            ]
+        )
+        return trace.model_copy(update={"events": events})

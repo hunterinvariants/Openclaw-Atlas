@@ -12,7 +12,7 @@ from typing import Any, Protocol, cast
 
 from .environment import FakeToolEnvironment, ToolFailure
 from .models import TaskSpec, Trace, TraceEvent, WorkflowStep
-from .simulator import DeterministicAgent
+from .simulator import DeterministicAgent, NaiveAgent
 
 
 @dataclass(frozen=True)
@@ -48,7 +48,10 @@ class ReferenceAdapter:
 
     async def run(self, task: TaskSpec, prompt: PromptTemplate) -> Trace:
         prompt.render(task)
-        return DeterministicAgent().run(task)
+        agent = (
+            NaiveAgent() if task.reference_agent == "naive" else DeterministicAgent()
+        )
+        return agent.run(task)
 
 
 class CallableAdapter:
@@ -353,8 +356,5 @@ def _json_type(value: Any) -> str:
 def _find_step(task: TaskSpec, tool: str, start: int) -> int:
     for index in range(start, len(task.workflow)):
         if task.workflow[index].tool == tool:
-            return index
-    for index, step in enumerate(task.workflow):
-        if step.tool == tool:
             return index
     raise ValueError(f"model called undeclared tool {tool!r}")

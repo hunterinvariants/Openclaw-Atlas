@@ -1,6 +1,6 @@
 {
   "adapter": "deterministic-reference",
-  "dataset_digest": "f36bb6d433b6aff6df289a9addd6c8cef80184d3a42d906c2cca82a6c1b92940",
+  "dataset_digest": "4a14059959fbf77a6ad1eab900a9e84bd7a8564f1c2422ec2fd4b0ae895f60ef",
   "deterministic": true,
   "estimated_cost_usd": null,
   "prompt": null,
@@ -13,6 +13,6 @@
     "status": 0.2,
     "tools": 0.4
   },
-  "tasks": 25,
+  "tasks": 26,
   "usage": {}
 }

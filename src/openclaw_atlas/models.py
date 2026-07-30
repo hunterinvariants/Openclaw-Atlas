@@ -52,6 +52,7 @@ class TaskSpec(StrictModel):
     title: str
     prompt: str
     workflow: list[WorkflowStep]
+    reference_agent: Literal["deterministic", "naive"] = "deterministic"
     tool_catalog: list[WorkflowStep] = Field(default_factory=list)
     expected_answer_contains: list[str]
     max_tool_calls: int = Field(ge=0)

@@ -9,24 +9,30 @@ from .adapters import AgentAdapter, PromptTemplate, ReferenceAdapter
 from .io import load_tasks, read_trace, write_json, write_trace
 from .models import EvaluationReport, EvaluationResult, TaskSpec, Trace
 from .scoring import score
+from .simulator import DeterministicAgent, NaiveAgent
 from .stability import STABILITY_METHOD, STABILITY_WEIGHTS, stability_score
 
 DEFAULT_REPETITIONS = 3
 
 
 class EvaluationRunner:
-    def run(self, dataset: Path, evidence_dir: Path) -> EvaluationReport:
+    def run(
+        self, dataset: Path, evidence_dir: Path, *, resume: bool = False
+    ) -> EvaluationReport:
         tasks, adapter = load_tasks(dataset), ReferenceAdapter()
         results = []
         for task in tasks:
-            trace = (
-                read_trace(evidence_dir / "traces" / f"{task.id}.json")
-                if (evidence_dir / "traces" / f"{task.id}.json").exists()
-                else None
-            )
-            trace = trace or __import__(
-                "openclaw_atlas.simulator", fromlist=["DeterministicAgent"]
-            ).DeterministicAgent().run(task)
+            cache = evidence_dir / "runs" / task.id / "1.json"
+            if resume and cache.exists():
+                trace = read_trace(cache)
+            else:
+                agent = (
+                    NaiveAgent()
+                    if task.reference_agent == "naive"
+                    else DeterministicAgent()
+                )
+                trace = agent.run(task)
+                write_trace(cache, trace)
             self._persist_trace(evidence_dir, trace)
             results.append(score(task, trace, reproducibility=1.0))
             self._checkpoint(evidence_dir, dataset, results)
@@ -46,7 +52,7 @@ class EvaluationRunner:
         *,
         repetitions: int = DEFAULT_REPETITIONS,
         concurrency: int = 4,
-        resume: bool = True,
+        resume: bool = False,
     ) -> EvaluationReport:
         if repetitions < 1 or concurrency < 1:
             raise ValueError("repetitions and concurrency must be positive")
@@ -93,11 +99,14 @@ class EvaluationRunner:
     def _checkpoint(
         self, evidence_dir: Path, dataset: Path, results: list[EvaluationResult]
     ) -> None:
+        partial = EvaluationReport.create(dataset.as_posix(), results)
         write_json(
             evidence_dir / "checkpoint.json",
-            EvaluationReport.create(dataset.as_posix(), results).model_dump(
-                mode="json"
-            ),
+            {
+                "artifact_kind": "incomplete_checkpoint",
+                "completed_tasks": len(results),
+                "report": partial.model_dump(mode="json"),
+            },
         )
 
     def _write(self, evidence_dir: Path, report: EvaluationReport) -> None:
@@ -116,18 +125,22 @@ class EvaluationRunner:
         repetitions: int,
         report: EvaluationReport,
     ) -> None:
-        usage = {
-            key: sum(
-                float(r)
-                for trace in (evidence_dir / "traces").glob("*.json")
-                for key, r in read_trace(trace).usage.items()
+        usage: dict[str, float] = {}
+        paths: list[Path] = []
+        for result in report.results:
+            run_paths = [
+                evidence_dir / "runs" / result.task_id / f"{index + 1}.json"
+                for index in range(repetitions)
+            ]
+            existing = [path for path in run_paths if path.exists()]
+            paths.extend(
+                existing
+                if existing
+                else [evidence_dir / "traces" / f"{result.task_id}.json"]
             )
-            for key in {
-                k
-                for trace in (evidence_dir / "traces").glob("*.json")
-                for k in read_trace(trace).usage
-            }
-        }
+        for path in paths:
+            for key, value in read_trace(path).usage.items():
+                usage[key] = usage.get(key, 0.0) + float(value)
         pricing = adapter.get("pricing_usd_per_million_tokens", {})
         input_rate = pricing.get("input")
         output_rate = pricing.get("output")

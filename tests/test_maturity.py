@@ -55,10 +55,10 @@ def test_openai_adapter_executes_model_tool_call_against_fake_environment() -> N
 def test_negative_controls_produce_expected_red_rows(tmp_path: Path) -> None:
     report = EvaluationRunner().run(DATASET, tmp_path)
     controls = [result for result in report.results if not result.expected_pass]
-    assert len(controls) == 3
+    assert len(controls) == 4
     assert all(not result.passed and result.outcome_matched for result in controls)
     markdown = (tmp_path / "report.md").read_text(encoding="utf-8")
-    assert markdown.count("| FAIL | FAIL | MATCH |") == 3
+    assert markdown.count("| FAIL | FAIL | MATCH |") == 4
 
 
 def test_stochastic_wording_retains_structural_stability(tmp_path: Path) -> None:
@@ -137,7 +137,7 @@ def test_review_cli_template_and_analysis(tmp_path: Path, monkeypatch, capsys) -
         ],
     )
     assert main() == 0
-    assert len(load_labels(output)) == 25
+    assert len(load_labels(output)) == 26
 
     monkeypatch.setattr(
         sys,
@@ -165,3 +165,97 @@ def test_human_disagreement_is_load_bearing(tmp_path: Path) -> None:
     TraceStore(database).ingest(baseline, evidence / "traces", labels)
     with sqlite3.connect(database) as connection:
         assert connection.execute("SELECT count(*) FROM reviews").fetchone()[0] == 4
+
+
+def test_reference_run_never_scores_final_trace_output_as_cache(tmp_path: Path) -> None:
+    from openclaw_atlas.io import read_trace, write_trace
+
+    runner = EvaluationRunner()
+    runner.run(DATASET, tmp_path)
+    path = tmp_path / "traces" / "lookup-customer-tier.json"
+    original = read_trace(path)
+    forged = original.model_copy(
+        update={"events": original.events[:1], "final_answer": "forged"}
+    )
+    write_trace(path, forged)
+    write_trace(tmp_path / "runs" / "lookup-customer-tier" / "1.json", forged)
+    runner.run(DATASET, tmp_path)
+    regenerated = read_trace(path)
+    assert regenerated.final_answer != "forged"
+    assert len(regenerated.events) == 3
+
+
+def test_injection_is_delivered_and_naive_control_is_rejected(tmp_path: Path) -> None:
+    from openclaw_atlas.io import read_trace
+
+    report = EvaluationRunner().run(DATASET, tmp_path)
+    safe = read_trace(tmp_path / "traces" / "injected-instruction-resistance.json")
+    assert any(
+        isinstance(event.result, dict) and "untrusted_instruction" in event.result
+        for event in safe.events
+    )
+    control = next(
+        item for item in report.results if item.task_id == "control-injection-following"
+    )
+    assert not control.passed and control.outcome_matched
+    assert "forbidden_tool_called" in control.policy_violations
+
+
+def test_usage_aggregation_preserves_token_dimensions(tmp_path: Path) -> None:
+    import json
+
+    from openclaw_atlas.io import write_trace
+    from openclaw_atlas.models import Trace
+
+    traces = tmp_path / "traces"
+    for task_id, usage in (
+        ("a", {"input_tokens": 100, "output_tokens": 10, "total_tokens": 110}),
+        ("b", {"input_tokens": 200, "output_tokens": 20, "total_tokens": 220}),
+    ):
+        write_trace(
+            traces / f"{task_id}.json",
+            Trace(
+                task_id=task_id,
+                events=[],
+                final_answer="ok",
+                status="completed",
+                usage=usage,
+            ),
+        )
+    EvaluationRunner._write_provenance(
+        tmp_path,
+        DATASET,
+        {"pricing_usd_per_million_tokens": {"input": 1.0, "output": 2.0}},
+        None,
+        1,
+        SimpleNamespace(
+            results=[SimpleNamespace(task_id="a"), SimpleNamespace(task_id="b")],
+            task_count=2,
+        ),
+    )
+    provenance = json.loads((tmp_path / "provenance.json").read_text())
+    assert provenance["usage"] == {
+        "input_tokens": 300.0,
+        "output_tokens": 30.0,
+        "total_tokens": 330.0,
+    }
+    assert provenance["estimated_cost_usd"] == 0.00036
+
+
+def test_checkpoint_is_marked_incomplete(tmp_path: Path) -> None:
+    import json
+
+    EvaluationRunner()._checkpoint(tmp_path, DATASET, [])
+    checkpoint = json.loads((tmp_path / "checkpoint.json").read_text())
+    assert checkpoint["artifact_kind"] == "incomplete_checkpoint"
+    assert checkpoint["completed_tasks"] == 0
+
+
+def test_model_cannot_resatisfy_an_earlier_step_out_of_order() -> None:
+    import pytest
+
+    from openclaw_atlas.adapters import _find_step
+
+    task = next(task for task in load_tasks(DATASET) if task.id == "two-source-summary")
+    with pytest.raises(ValueError, match="undeclared tool"):
+        _find_step(task, task.workflow[0].tool, 1)

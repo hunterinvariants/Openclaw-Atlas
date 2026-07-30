@@ -31,7 +31,7 @@ def parser() -> argparse.ArgumentParser:
     run.add_argument("--prompt", default="tool-agent@2")
     run.add_argument("--repetitions", type=int, default=3)
     run.add_argument("--concurrency", type=int, default=4)
-    run.add_argument("--no-resume", action="store_true")
+    run.add_argument("--resume", action="store_true")
     run.add_argument("--temperature", type=float)
     run.add_argument("--top-p", type=float)
     run.add_argument("--seed", type=int)
@@ -114,7 +114,7 @@ def main() -> int:
 def _run(args: argparse.Namespace) -> int:
     runner = EvaluationRunner()
     if args.adapter == "reference":
-        report = runner.run(args.dataset, args.evidence_dir)
+        report = runner.run(args.dataset, args.evidence_dir, resume=args.resume)
     else:
         name, version = args.prompt.rsplit("@", 1)
         prompt = PromptRegistry.from_json(args.prompt_registry).get(name, version)
@@ -140,7 +140,7 @@ def _run(args: argparse.Namespace) -> int:
                 prompt,
                 repetitions=args.repetitions,
                 concurrency=args.concurrency,
-                resume=not args.no_resume,
+                resume=args.resume,
             )
         )
     print(

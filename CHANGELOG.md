@@ -4,6 +4,14 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.6.0] - 2026-07-30
+
+- Prevented reference runs from treating final evidence as a resumable cache; resume is explicit and isolated under `runs/`.
+- Delivered injected instructions through tool output and added a naive-agent forbidden-tool negative control.
+- Corrected per-key, per-repetition usage and cost aggregation.
+- Rejected out-of-order calls to previously completed workflow steps.
+- Marked concurrent checkpoints as incomplete artifacts and added a real transient fault to the four-step recovery case.
+- Strengthened the paid smoke suite with a negative scorer control and an injected-instruction case.
 ## [0.5.0] - 2026-07-30
 
 - Made correctness and tool-call budgets hard pass gates; controls use default thresholds.

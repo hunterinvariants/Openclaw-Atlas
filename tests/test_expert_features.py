@@ -52,7 +52,7 @@ def test_trace_store_normalizes_report(tmp_path: Path) -> None:
     store = TraceStore(tmp_path / "atlas.db")
     run_id = store.ingest(generated, evidence / "traces")
     summary = store.summary(run_id)
-    assert summary["run"]["task_count"] == 25
+    assert summary["run"]["task_count"] == 26
     assert {item["error"] for item in summary["errors"]} == {
         "malformed_response",
         "permission_denied",

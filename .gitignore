@@ -10,3 +10,4 @@ build/
 evidence/ci/
 
 evidence/candidate/
+evidence/**/runs/

@@ -7,10 +7,10 @@ from openclaw_atlas.io import load_tasks
 DATASET = Path("datasets/milestone-1.jsonl")
 
 
-def test_milestone_has_twenty_tasks_plus_three_controls() -> None:
+def test_milestone_has_twenty_two_tasks_plus_four_controls() -> None:
     tasks = load_tasks(DATASET)
-    assert len(tasks) == 25
-    assert len({task.id for task in tasks}) == 25
+    assert len(tasks) == 26
+    assert len({task.id for task in tasks}) == 26
 
 
 def test_rejects_duplicate_ids(tmp_path: Path) -> None:

@@ -11,8 +11,8 @@ policies, measures repeated-run stability, and gates changes against checked-in
 evidence.
 
 The baseline intentionally includes failures. Twenty-two positive tasks must pass;
-three negative controls must fail for correctness, efficiency, and safety. A run
-is valid only when all 25 observed outcomes match their declared expectations.
+four negative controls must fail for correctness, efficiency, and safety. A run
+is valid only when all 26 observed outcomes match their declared expectations.
 
 ## What is demonstrated
 
@@ -39,8 +39,8 @@ atlas run datasets/milestone-1.jsonl --evidence-dir evidence/candidate
 atlas compare evidence/latest/report.json evidence/candidate/report.json
 ```
 
-A successful run reports `expected-outcomes=25/25`, not a misleading all-green
-score. The generated report contains three visible expected FAIL rows.
+A successful run reports `expected-outcomes=26/26`, not a misleading all-green
+score. The generated report contains four visible expected FAIL rows.
 
 ## Run a real OpenAI adapter
 
@@ -60,10 +60,16 @@ atlas run datasets/milestone-1.jsonl \
   --evidence-dir evidence/openai
 ```
 
+Resume is explicit and off by default. Add `--resume` only to reuse `runs/<task>/<repetition>.json`; final `traces/` files are never treated as cache.
+
+The deterministic reference is executed once and records `repetitions: 1`; its
+reproducibility score is a declared deterministic invariant, not an empirical
+N-run measurement.
+
 Adapter runs write `provenance.json` with the adapter, prompt and dataset
 digests, sampling parameters, retry/round limits, token usage, repetition count,
-and the exact stability weights. Runs checkpoint per task and resume from per-repetition
-traces after interruption. ATLAS does not compare a model
+and the exact stability weights. Runs checkpoint per task and resume from
+per-repetition traces after interruption. ATLAS does not compare a model
 trace with the reference agent; it compares repeated runs from the producing
 adapter.
 
@@ -73,7 +79,7 @@ adapter.
 under `evidence/openai-<model>/` and must include its generated report, traces,
 and provenance. The repository never labels protocol-fake tests as real-model
 evidence. A maintainer must supply `OPENAI_API_KEY`; no credential was available
-for the v0.5.0 evidence refresh.
+for the v0.6.0 evidence refresh.
 
 ## Dataset and negative controls
 
@@ -87,6 +93,7 @@ regression.
 | `control-wrong-expectation` | Fixture does not satisfy the answer oracle | correctness |
 | `control-call-budget` | Workflow exceeds its declared budget | efficiency |
 | `control-mutation-without-permission` | Mutation occurs before authorization | safety |
+| `control-injection-following` | Naive agent obeys untrusted output and calls a forbidden tool | safety |
 
 ## Evidence and regression gates
 
