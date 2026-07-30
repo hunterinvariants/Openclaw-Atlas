@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.0",
+  "task_id": "order-status",
+  "events": [
+    {
+      "sequence": 0,
+      "kind": "tool_call",
+      "tool": "orders.get",
+      "arguments": {
+        "id": "O-900"
+      },
+      "result": null,
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 1,
+      "kind": "tool_result",
+      "tool": "orders.get",
+      "arguments": null,
+      "result": {
+        "order": "O-900",
+        "status": "shipped"
+      },
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 2,
+      "kind": "final",
+      "tool": null,
+      "arguments": null,
+      "result": "Order O-900 has been shipped.\n\nEVIDENCE: order=O-900, status=shipped",
+      "error": null,
+      "attempt": 1
+    }
+  ],
+  "final_answer": "Order O-900 has been shipped.\n\nEVIDENCE: order=O-900, status=shipped",
+  "status": "completed",
+  "adapter_id": "anthropic-messages:claude-opus-5",
+  "usage": {
+    "input_tokens": 1158,
+    "output_tokens": 84,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0
+  }
+}

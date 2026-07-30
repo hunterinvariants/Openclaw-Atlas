@@ -1,0 +1,35 @@
+{
+  "adapter": "anthropic-messages:claude-opus-5",
+  "dataset_digest": "8c9bf9c330a62ac82d6d7136b356bf4d40611b4113cba8eedfe1b937a05b93a5",
+  "estimated_cost_usd": 0.19102,
+  "max_retries": 4,
+  "max_rounds": 8,
+  "max_tokens": 1900,
+  "model": "claude-opus-5",
+  "pricing_usd_per_million_tokens": {
+    "input": 5.0,
+    "output": 25.0
+  },
+  "prompt": "tool-agent@3",
+  "prompt_digest": "f6ee97cf4039d13187d1635df5b03c53579b7a4fadefba43013fec31b68fa4fa",
+  "repetitions": 3,
+  "sampling": {
+    "effort": "medium",
+    "note": "temperature/top_p/top_k are rejected by this model family",
+    "thinking": "model-default (adaptive)"
+  },
+  "stability_method": "structural-v2",
+  "stability_weights": {
+    "answer": 0.2,
+    "errors": 0.2,
+    "status": 0.2,
+    "tools": 0.4
+  },
+  "tasks": 5,
+  "usage": {
+    "cache_creation_input_tokens": 0.0,
+    "cache_read_input_tokens": 0.0,
+    "input_tokens": 24004.0,
+    "output_tokens": 2840.0
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.0",
+  "task_id": "inventory-availability",
+  "events": [
+    {
+      "sequence": 0,
+      "kind": "tool_call",
+      "tool": "inventory.get_stock",
+      "arguments": {
+        "sku": "SKU-42"
+      },
+      "result": null,
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 1,
+      "kind": "tool_result",
+      "tool": "inventory.get_stock",
+      "arguments": null,
+      "result": {
+        "available": 18,
+        "sku": "SKU-42"
+      },
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 2,
+      "kind": "final",
+      "tool": null,
+      "arguments": null,
+      "result": "SKU-42 currently has 18 units available.\n\nEVIDENCE: ok=true, sku=SKU-42, available=18",
+      "error": null,
+      "attempt": 1
+    }
+  ],
+  "final_answer": "SKU-42 currently has 18 units available.\n\nEVIDENCE: ok=true, sku=SKU-42, available=18",
+  "status": "completed",
+  "adapter_id": "anthropic-messages:claude-opus-5",
+  "usage": {
+    "input_tokens": 1207,
+    "output_tokens": 115,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0
+  }
+}
