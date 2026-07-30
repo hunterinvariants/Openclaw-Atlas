@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0",
+  "task_id": "deployment-version",
+  "events": [
+    {
+      "sequence": 0,
+      "kind": "tool_call",
+      "tool": "deployments.current",
+      "arguments": {
+        "environment": "production",
+        "service": "api"
+      },
+      "result": null,
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 1,
+      "kind": "tool_result",
+      "tool": "deployments.current",
+      "arguments": null,
+      "result": {
+        "environment": "production",
+        "version": "1.8.2"
+      },
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 2,
+      "kind": "final",
+      "tool": null,
+      "arguments": null,
+      "result": "environment=production, version=1.8.2",
+      "error": null,
+      "attempt": 1
+    }
+  ],
+  "final_answer": "environment=production, version=1.8.2",
+  "status": "completed"
+}

@@ -1,0 +1,61 @@
+{
+  "schema_version": "1.0",
+  "task_id": "two-source-summary",
+  "events": [
+    {
+      "sequence": 0,
+      "kind": "tool_call",
+      "tool": "risk.get",
+      "arguments": {
+        "account": "A-12"
+      },
+      "result": null,
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 1,
+      "kind": "tool_result",
+      "tool": "risk.get",
+      "arguments": null,
+      "result": {
+        "risk": "low"
+      },
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 2,
+      "kind": "tool_call",
+      "tool": "cases.list",
+      "arguments": {
+        "account": "A-12"
+      },
+      "result": null,
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 3,
+      "kind": "tool_result",
+      "tool": "cases.list",
+      "arguments": null,
+      "result": {
+        "open_cases": 2
+      },
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 4,
+      "kind": "final",
+      "tool": null,
+      "arguments": null,
+      "result": "risk=low | open_cases=2",
+      "error": null,
+      "attempt": 1
+    }
+  ],
+  "final_answer": "risk=low | open_cases=2",
+  "status": "completed"
+}

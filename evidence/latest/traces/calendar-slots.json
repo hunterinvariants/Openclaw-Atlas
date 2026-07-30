@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0",
+  "task_id": "calendar-slots",
+  "events": [
+    {
+      "sequence": 0,
+      "kind": "tool_call",
+      "tool": "calendar.availability",
+      "arguments": {
+        "date": "2026-08-03"
+      },
+      "result": null,
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 1,
+      "kind": "tool_result",
+      "tool": "calendar.availability",
+      "arguments": null,
+      "result": [
+        "09:00",
+        "14:30"
+      ],
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 2,
+      "kind": "final",
+      "tool": null,
+      "arguments": null,
+      "result": "09:00, 14:30",
+      "error": null,
+      "attempt": 1
+    }
+  ],
+  "final_answer": "09:00, 14:30",
+  "status": "completed"
+}

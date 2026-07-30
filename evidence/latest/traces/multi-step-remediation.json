@@ -1,0 +1,63 @@
+{
+  "schema_version": "1.0",
+  "task_id": "multi-step-remediation",
+  "events": [
+    {
+      "sequence": 0,
+      "kind": "tool_call",
+      "tool": "jobs.get",
+      "arguments": {
+        "id": "J-2"
+      },
+      "result": null,
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 1,
+      "kind": "tool_result",
+      "tool": "jobs.get",
+      "arguments": null,
+      "result": {
+        "job": "J-2",
+        "state": "failed"
+      },
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 2,
+      "kind": "tool_call",
+      "tool": "jobs.retry",
+      "arguments": {
+        "id": "J-2"
+      },
+      "result": null,
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 3,
+      "kind": "tool_result",
+      "tool": "jobs.retry",
+      "arguments": null,
+      "result": {
+        "job": "J-2",
+        "state": "queued"
+      },
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 4,
+      "kind": "final",
+      "tool": null,
+      "arguments": null,
+      "result": "job=J-2, state=failed | job=J-2, state=queued",
+      "error": null,
+      "attempt": 1
+    }
+  ],
+  "final_answer": "job=J-2, state=failed | job=J-2, state=queued",
+  "status": "completed"
+}

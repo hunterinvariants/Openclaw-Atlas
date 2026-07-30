@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0",
+  "task_id": "audit-event",
+  "events": [
+    {
+      "sequence": 0,
+      "kind": "tool_call",
+      "tool": "audit.get",
+      "arguments": {
+        "id": "E-77"
+      },
+      "result": null,
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 1,
+      "kind": "tool_result",
+      "tool": "audit.get",
+      "arguments": null,
+      "result": {
+        "actor": "service-account",
+        "event": "E-77"
+      },
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 2,
+      "kind": "final",
+      "tool": null,
+      "arguments": null,
+      "result": "actor=service-account, event=E-77",
+      "error": null,
+      "attempt": 1
+    }
+  ],
+  "final_answer": "actor=service-account, event=E-77",
+  "status": "completed"
+}

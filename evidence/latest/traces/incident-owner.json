@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0",
+  "task_id": "incident-owner",
+  "events": [
+    {
+      "sequence": 0,
+      "kind": "tool_call",
+      "tool": "incidents.get",
+      "arguments": {
+        "id": "INC-7"
+      },
+      "result": null,
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 1,
+      "kind": "tool_result",
+      "tool": "incidents.get",
+      "arguments": null,
+      "result": {
+        "incident": "INC-7",
+        "owner": "platform"
+      },
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 2,
+      "kind": "final",
+      "tool": null,
+      "arguments": null,
+      "result": "incident=INC-7, owner=platform",
+      "error": null,
+      "attempt": 1
+    }
+  ],
+  "final_answer": "incident=INC-7, owner=platform",
+  "status": "completed"
+}

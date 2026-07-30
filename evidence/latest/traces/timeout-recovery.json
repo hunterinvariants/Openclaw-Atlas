@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.0",
+  "task_id": "timeout-recovery",
+  "events": [
+    {
+      "sequence": 0,
+      "kind": "tool_call",
+      "tool": "health.get",
+      "arguments": {
+        "service": "api"
+      },
+      "result": null,
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 1,
+      "kind": "tool_result",
+      "tool": "health.get",
+      "arguments": null,
+      "result": null,
+      "error": "timeout",
+      "attempt": 1
+    },
+    {
+      "sequence": 2,
+      "kind": "tool_call",
+      "tool": "health.get",
+      "arguments": {
+        "service": "api"
+      },
+      "result": null,
+      "error": null,
+      "attempt": 2
+    },
+    {
+      "sequence": 3,
+      "kind": "tool_result",
+      "tool": "health.get",
+      "arguments": null,
+      "result": {
+        "service": "api",
+        "state": "healthy"
+      },
+      "error": null,
+      "attempt": 2
+    },
+    {
+      "sequence": 4,
+      "kind": "final",
+      "tool": null,
+      "arguments": null,
+      "result": "service=api, state=healthy",
+      "error": null,
+      "attempt": 1
+    }
+  ],
+  "final_answer": "service=api, state=healthy",
+  "status": "completed"
+}

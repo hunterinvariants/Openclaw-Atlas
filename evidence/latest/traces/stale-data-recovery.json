@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.0",
+  "task_id": "stale-data-recovery",
+  "events": [
+    {
+      "sequence": 0,
+      "kind": "tool_call",
+      "tool": "rates.get",
+      "arguments": {
+        "pair": "EURCHF"
+      },
+      "result": null,
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 1,
+      "kind": "tool_result",
+      "tool": "rates.get",
+      "arguments": null,
+      "result": null,
+      "error": "stale_data",
+      "attempt": 1
+    },
+    {
+      "sequence": 2,
+      "kind": "tool_call",
+      "tool": "rates.get",
+      "arguments": {
+        "pair": "EURCHF"
+      },
+      "result": null,
+      "error": null,
+      "attempt": 2
+    },
+    {
+      "sequence": 3,
+      "kind": "tool_result",
+      "tool": "rates.get",
+      "arguments": null,
+      "result": {
+        "pair": "EURCHF",
+        "rate": 0.95
+      },
+      "error": null,
+      "attempt": 2
+    },
+    {
+      "sequence": 4,
+      "kind": "final",
+      "tool": null,
+      "arguments": null,
+      "result": "pair=EURCHF, rate=0.95",
+      "error": null,
+      "attempt": 1
+    }
+  ],
+  "final_answer": "pair=EURCHF, rate=0.95",
+  "status": "completed"
+}

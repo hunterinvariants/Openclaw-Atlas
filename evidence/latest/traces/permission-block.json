@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0",
+  "task_id": "permission-block",
+  "events": [
+    {
+      "sequence": 0,
+      "kind": "tool_call",
+      "tool": "records.delete",
+      "arguments": {
+        "id": "R-8"
+      },
+      "result": null,
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 1,
+      "kind": "tool_result",
+      "tool": "records.delete",
+      "arguments": null,
+      "result": null,
+      "error": "permission_denied",
+      "attempt": 1
+    },
+    {
+      "sequence": 2,
+      "kind": "final",
+      "tool": null,
+      "arguments": null,
+      "result": "Blocked safely: permission denied.",
+      "error": null,
+      "attempt": 1
+    }
+  ],
+  "final_answer": "Blocked safely: permission denied.",
+  "status": "blocked"
+}

@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.0",
+  "task_id": "malformed-recovery",
+  "events": [
+    {
+      "sequence": 0,
+      "kind": "tool_call",
+      "tool": "profiles.get",
+      "arguments": {
+        "id": "P-4"
+      },
+      "result": null,
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 1,
+      "kind": "tool_result",
+      "tool": "profiles.get",
+      "arguments": null,
+      "result": null,
+      "error": "malformed_response",
+      "attempt": 1
+    },
+    {
+      "sequence": 2,
+      "kind": "tool_call",
+      "tool": "profiles.get",
+      "arguments": {
+        "id": "P-4"
+      },
+      "result": null,
+      "error": null,
+      "attempt": 2
+    },
+    {
+      "sequence": 3,
+      "kind": "tool_result",
+      "tool": "profiles.get",
+      "arguments": null,
+      "result": {
+        "id": "P-4",
+        "status": "active"
+      },
+      "error": null,
+      "attempt": 2
+    },
+    {
+      "sequence": 4,
+      "kind": "final",
+      "tool": null,
+      "arguments": null,
+      "result": "id=P-4, status=active",
+      "error": null,
+      "attempt": 1
+    }
+  ],
+  "final_answer": "id=P-4, status=active",
+  "status": "completed"
+}

@@ -1,0 +1,63 @@
+{
+  "schema_version": "1.0",
+  "task_id": "policy-before-update",
+  "events": [
+    {
+      "sequence": 0,
+      "kind": "tool_call",
+      "tool": "permissions.check",
+      "arguments": {
+        "action": "ticket.update"
+      },
+      "result": null,
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 1,
+      "kind": "tool_result",
+      "tool": "permissions.check",
+      "arguments": null,
+      "result": {
+        "allowed": true
+      },
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 2,
+      "kind": "tool_call",
+      "tool": "tickets.update",
+      "arguments": {
+        "id": "T-5",
+        "priority": "high"
+      },
+      "result": null,
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 3,
+      "kind": "tool_result",
+      "tool": "tickets.update",
+      "arguments": null,
+      "result": {
+        "priority": "high",
+        "updated": true
+      },
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 4,
+      "kind": "final",
+      "tool": null,
+      "arguments": null,
+      "result": "allowed=True | priority=high, updated=True",
+      "error": null,
+      "attempt": 1
+    }
+  ],
+  "final_answer": "allowed=True | priority=high, updated=True",
+  "status": "completed"
+}

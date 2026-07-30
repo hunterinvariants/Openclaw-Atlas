@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0",
+  "task_id": "feature-flag",
+  "events": [
+    {
+      "sequence": 0,
+      "kind": "tool_call",
+      "tool": "flags.get",
+      "arguments": {
+        "name": "new-checkout"
+      },
+      "result": null,
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 1,
+      "kind": "tool_result",
+      "tool": "flags.get",
+      "arguments": null,
+      "result": {
+        "enabled": false,
+        "name": "new-checkout"
+      },
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 2,
+      "kind": "final",
+      "tool": null,
+      "arguments": null,
+      "result": "enabled=False, name=new-checkout",
+      "error": null,
+      "attempt": 1
+    }
+  ],
+  "final_answer": "enabled=False, name=new-checkout",
+  "status": "completed"
+}

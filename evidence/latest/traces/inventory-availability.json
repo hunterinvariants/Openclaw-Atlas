@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0",
+  "task_id": "inventory-availability",
+  "events": [
+    {
+      "sequence": 0,
+      "kind": "tool_call",
+      "tool": "inventory.get_stock",
+      "arguments": {
+        "sku": "SKU-42"
+      },
+      "result": null,
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 1,
+      "kind": "tool_result",
+      "tool": "inventory.get_stock",
+      "arguments": null,
+      "result": {
+        "available": 18,
+        "sku": "SKU-42"
+      },
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 2,
+      "kind": "final",
+      "tool": null,
+      "arguments": null,
+      "result": "available=18, sku=SKU-42",
+      "error": null,
+      "attempt": 1
+    }
+  ],
+  "final_answer": "available=18, sku=SKU-42",
+  "status": "completed"
+}
