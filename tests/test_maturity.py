@@ -39,7 +39,8 @@ class FakeMessages:
             block = SimpleNamespace(
                 type="tool_use",
                 id="toolu_1",
-                name="crm.get_customer",
+                # The API echoes the wire name, not the dataset's dotted name.
+                name="crm_get_customer",
                 input=self.arguments,
             )
             return SimpleNamespace(content=[block], stop_reason="tool_use", usage=usage)
@@ -97,6 +98,50 @@ def test_anthropic_adapter_names_token_truncation_instead_of_blaming_the_model()
     )
     assert trace.status == "failed"
     assert "max_tokens=64" in trace.final_answer
+
+
+def test_every_dataset_tool_name_is_valid_on_the_wire() -> None:
+    """The API rejects tool names outside ^[a-zA-Z0-9_-]{1,128}$; datasets use dots."""
+    from openclaw_atlas.adapters import (
+        TOOL_NAME_PATTERN,
+        _tool_definition,
+        _unique_steps,
+        _wire_names,
+    )
+
+    seen = 0
+    for dataset in Path("datasets").glob("*.jsonl"):
+        for task in load_tasks(dataset):
+            steps = _unique_steps([*task.workflow, *task.tool_catalog])
+            _wire_names(steps)  # raises on a collision
+            for definition in (_tool_definition(step) for step in steps):
+                assert TOOL_NAME_PATTERN.match(definition["name"]), definition["name"]
+                seen += 1
+    assert seen > 0
+
+
+def test_wire_tool_names_round_trip_to_canonical_names() -> None:
+    task = load_tasks(DATASET)[0]
+    prompt = PromptRegistry.from_json(Path("prompts.json")).get("tool-agent", "2")
+    client = FakeClient()
+    trace = asyncio.run(_adapter(client=client).run(task, prompt))
+    sent = client.messages.requests[0]["tools"][0]["name"]
+    assert sent == "crm_get_customer"
+    # ...but the trace records the dataset's canonical name.
+    assert [e.tool for e in trace.events if e.tool] == [
+        "crm.get_customer",
+        "crm.get_customer",
+    ]
+
+
+def test_colliding_tool_names_are_rejected() -> None:
+    from openclaw_atlas.adapters import _wire_names
+    from openclaw_atlas.models import WorkflowStep
+
+    # "a.b" and "a_b" both encode to "a_b"; "a-b" does not (hyphens are legal).
+    _wire_names([WorkflowStep(tool="a.b"), WorkflowStep(tool="a-b")])
+    with pytest.raises(ValueError, match="encode to"):
+        _wire_names([WorkflowStep(tool="a.b"), WorkflowStep(tool="a_b")])
 
 
 def test_anthropic_adapter_rejects_invalid_effort() -> None:

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from hashlib import sha256
@@ -152,6 +153,7 @@ class AnthropicMessagesAdapter:
         messages: list[dict[str, Any]] = [{"role": "user", "content": task.prompt}]
         sequence, next_step = 0, 0
         catalog = _unique_steps([*task.workflow, *task.tool_catalog])
+        canonical = _wire_names(catalog)
         tools = [_tool_definition(step) for step in catalog]
         usage: dict[str, int | float] = {}
         for _ in range(self.max_rounds):
@@ -203,7 +205,10 @@ class AnthropicMessagesAdapter:
             messages.append({"role": "assistant", "content": blocks})
             results: list[dict[str, Any]] = []
             for call in calls:
-                tool = str(call.name)
+                # Traces always record the dataset's canonical tool name, so
+                # evidence stays comparable across adapters with different
+                # naming rules.
+                tool = canonical.get(str(call.name), str(call.name))
                 arguments = dict(getattr(call, "input", {}) or {})
                 try:
                     step_index = _find_step(task, tool, next_step)
@@ -372,12 +377,34 @@ def _unique_steps(steps: list[WorkflowStep]) -> list[WorkflowStep]:
     return list({s.tool: s for s in steps}.values())
 
 
+TOOL_NAME_PATTERN = re.compile(r"^[a-zA-Z0-9_-]{1,128}$")
+
+
+def _wire_name(tool: str) -> str:
+    """Anthropic tool names must match ^[a-zA-Z0-9_-]{1,128}$ — dots are out."""
+    return re.sub(r"[^a-zA-Z0-9_-]", "_", tool)[:128]
+
+
+def _wire_names(steps: list[WorkflowStep]) -> dict[str, str]:
+    """Map the wire name back to the dataset's canonical name."""
+    canonical: dict[str, str] = {}
+    for step in steps:
+        wire = _wire_name(step.tool)
+        existing = canonical.setdefault(wire, step.tool)
+        if existing != step.tool:
+            raise ValueError(
+                f"tools {existing!r} and {step.tool!r} both encode to {wire!r}"
+            )
+    return canonical
+
+
 def _tool_definition(step: WorkflowStep) -> dict[str, Any]:
     properties = {
         name: {"type": _json_type(value)} for name, value in step.arguments.items()
     }
     return {
-        "name": step.tool,
+        "name": _wire_name(step.tool),
+        # The canonical name stays visible to the model in the description.
         "description": f"Evaluation tool: {step.tool}",
         "input_schema": {
             "type": "object",
