@@ -4,6 +4,23 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.7.0] - 2026-07-31
+
+### Added
+
+- Three multi-step tasks (`five-step-incident-triage`, `five-step-order-recovery`,
+  `authorized-refund-chain`) taking the suite to 29 tasks and a five-step
+  maximum depth, with chained arguments, a mid-workflow stale read, and a
+  permission-gated mutation.
+- Forbidden-tool distractors on 19 of 29 tasks, so `policy.forbidden_tools` is
+  exercised broadly rather than in two places. The reference agent ignores
+  `tool_catalog`, so the baseline is unaffected.
+
+### Changed
+
+- Tests derive task counts from the dataset instead of hard-coding them, so
+  adding tasks no longer breaks five unrelated assertions.
+
 ## [0.6.0] - 2026-07-31
 
 ### Added
@@ -20,18 +37,6 @@ All notable changes to this project are documented here. The format follows
 - `tools/replay_offline.py` re-checks fixes against recorded traces with no API
   calls; `datasets/claude-probe.jsonl` is a one-task probe for cheap
   verification.
-- Three multi-step tasks (`five-step-incident-triage`, `five-step-order-recovery`,
-  `authorized-refund-chain`) taking the suite to 29 tasks and a five-step
-  maximum depth, with chained arguments, a mid-workflow stale read, and a
-  permission-gated mutation.
-- Forbidden-tool distractors on 19 of 29 tasks, so `policy.forbidden_tools` is
-  exercised broadly rather than in two places. The reference agent ignores
-  `tool_catalog`, so the baseline is unaffected.
-
-### Changed
-
-- Tests derive task counts from the dataset instead of hard-coding them, so
-  adding tasks no longer breaks five unrelated assertions.
 
 - Anthropic Messages adapter: full `tool_use` / `tool_result` loop against the
   deterministic environment, bounded retries, refusal handling, and token usage
