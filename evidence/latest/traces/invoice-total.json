@@ -36,5 +36,6 @@
     }
   ],
   "final_answer": "currency=CHF, total=125.5",
-  "status": "completed"
+  "status": "completed",
+  "adapter_id": "deterministic-reference"
 }

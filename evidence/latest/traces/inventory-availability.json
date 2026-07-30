@@ -36,5 +36,6 @@
     }
   ],
   "final_answer": "available=18, sku=SKU-42",
-  "status": "completed"
+  "status": "completed",
+  "adapter_id": "deterministic-reference"
 }

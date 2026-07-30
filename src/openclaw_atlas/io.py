@@ -14,7 +14,9 @@ def load_tasks(path: Path) -> list[TaskSpec]:
                 try:
                     tasks.append(TaskSpec.model_validate_json(line))
                 except Exception as exc:
-                    raise ValueError(f"{path}:{line_number}: invalid task: {exc}") from exc
+                    raise ValueError(
+                        f"{path}:{line_number}: invalid task: {exc}"
+                    ) from exc
     ids = [task.id for task in tasks]
     if len(ids) != len(set(ids)):
         raise ValueError(f"{path}: duplicate task IDs")
@@ -32,5 +34,6 @@ def read_trace(path: Path) -> Trace:
 
 def write_json(path: Path, value: object) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-
+    path.write_text(
+        json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )

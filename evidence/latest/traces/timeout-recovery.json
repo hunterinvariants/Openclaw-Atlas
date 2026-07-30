@@ -56,5 +56,6 @@
     }
   ],
   "final_answer": "service=api, state=healthy",
-  "status": "completed"
+  "status": "completed",
+  "adapter_id": "deterministic-reference"
 }

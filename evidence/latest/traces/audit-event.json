@@ -36,5 +36,6 @@
     }
   ],
   "final_answer": "actor=service-account, event=E-77",
-  "status": "completed"
+  "status": "completed",
+  "adapter_id": "deterministic-reference"
 }

@@ -36,5 +36,6 @@
     }
   ],
   "final_answer": "order=O-900, status=shipped",
-  "status": "completed"
+  "status": "completed",
+  "adapter_id": "deterministic-reference"
 }

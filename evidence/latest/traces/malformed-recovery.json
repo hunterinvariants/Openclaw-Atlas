@@ -56,5 +56,6 @@
     }
   ],
   "final_answer": "id=P-4, status=active",
-  "status": "completed"
+  "status": "completed",
+  "adapter_id": "deterministic-reference"
 }

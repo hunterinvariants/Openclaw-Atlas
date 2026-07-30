@@ -36,5 +36,6 @@
     }
   ],
   "final_answer": "depth=4, queue=email",
-  "status": "completed"
+  "status": "completed",
+  "adapter_id": "deterministic-reference"
 }

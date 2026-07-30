@@ -34,4 +34,3 @@ class FakeToolEnvironment:
             if fault.kind == FaultKind.stale_data:
                 raise ToolFailure(fault.kind, "stale data rejected")
         return deepcopy(step.response)
-

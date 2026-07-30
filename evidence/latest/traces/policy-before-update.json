@@ -59,5 +59,6 @@
     }
   ],
   "final_answer": "allowed=True | priority=high, updated=True",
-  "status": "completed"
+  "status": "completed",
+  "adapter_id": "deterministic-reference"
 }

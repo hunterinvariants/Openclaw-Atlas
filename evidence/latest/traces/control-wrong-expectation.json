@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0",
+  "task_id": "control-wrong-expectation",
+  "events": [
+    {
+      "sequence": 0,
+      "kind": "tool_call",
+      "tool": "crm.get_customer",
+      "arguments": {
+        "id": "C-100"
+      },
+      "result": null,
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 1,
+      "kind": "tool_result",
+      "tool": "crm.get_customer",
+      "arguments": null,
+      "result": {
+        "customer": "C-100",
+        "tier": "gold"
+      },
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 2,
+      "kind": "final",
+      "tool": null,
+      "arguments": null,
+      "result": "customer=C-100, tier=gold",
+      "error": null,
+      "attempt": 1
+    }
+  ],
+  "final_answer": "customer=C-100, tier=gold",
+  "status": "completed",
+  "adapter_id": "deterministic-reference"
+}

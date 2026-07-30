@@ -36,5 +36,6 @@
     }
   ],
   "final_answer": "city=Zurich, condition=clear",
-  "status": "completed"
+  "status": "completed",
+  "adapter_id": "deterministic-reference"
 }

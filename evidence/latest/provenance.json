@@ -1,0 +1,8 @@
+{
+  "adapter": "deterministic-reference",
+  "dataset_digest": "727db47dd05c79b842b02d11a19937e9c3d337447718b2f197564fbe3d06fa1d",
+  "prompt": "tool-agent@2",
+  "prompt_digest": "663327d2b0198f3b553f7c673cb9580e88f9fbc9e24206a2b438034cfecd1a37",
+  "repetitions": 3,
+  "stability_method": "structural-v1"
+}

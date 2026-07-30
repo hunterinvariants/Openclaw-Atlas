@@ -36,5 +36,6 @@
     }
   ],
   "final_answer": "cache=healthy, database=healthy",
-  "status": "completed"
+  "status": "completed",
+  "adapter_id": "deterministic-reference"
 }

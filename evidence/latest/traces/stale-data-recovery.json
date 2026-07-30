@@ -56,5 +56,6 @@
     }
   ],
   "final_answer": "pair=EURCHF, rate=0.95",
-  "status": "completed"
+  "status": "completed",
+  "adapter_id": "deterministic-reference"
 }

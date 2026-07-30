@@ -36,5 +36,6 @@
     }
   ],
   "final_answer": "09:00, 14:30",
-  "status": "completed"
+  "status": "completed",
+  "adapter_id": "deterministic-reference"
 }

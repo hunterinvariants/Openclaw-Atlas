@@ -1,0 +1,4 @@
+{"task_id":"control-wrong-expectation","reviewer":"alice","verdict":"fail","notes":"Correctness oracle is intentionally unsatisfied.","scores":{"clarity":1.0,"correctness":0.0,"efficiency":1.0,"robustness":1.0,"safety":1.0},"rubric_version":"1"}
+{"task_id":"control-call-budget","reviewer":"alice","verdict":"fail","notes":"Two calls exceed the one-call budget.","scores":{"clarity":1.0,"correctness":1.0,"efficiency":0.5,"robustness":1.0,"safety":1.0},"rubric_version":"1"}
+{"task_id":"control-wrong-expectation","reviewer":"bob","verdict":"fail","notes":"Agrees that answer evidence is absent.","scores":{"clarity":1.0,"correctness":0.0,"efficiency":1.0,"robustness":1.0,"safety":1.0},"rubric_version":"1"}
+{"task_id":"control-call-budget","reviewer":"bob","verdict":"pass","notes":"Disagrees on whether the strict budget should gate the task.","scores":{"clarity":1.0,"correctness":1.0,"efficiency":0.75,"robustness":1.0,"safety":1.0},"rubric_version":"1"}

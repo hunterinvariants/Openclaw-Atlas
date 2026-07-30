@@ -1,0 +1,26 @@
+﻿name: Evaluation proposal
+description: Propose a task, rubric, policy, fault, or adapter improvement
+title: "[evaluation] "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: gap
+    attributes:
+      label: Reliability gap
+      description: What behavior is not measured today?
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Proposed evidence and oracle
+      description: Explain how the evaluation avoids grading its own fixture projection.
+    validations:
+      required: true
+  - type: textarea
+    id: controls
+    attributes:
+      label: Negative controls
+      description: Describe how the scorer will be shown to reject bad behavior.
+    validations:
+      required: true

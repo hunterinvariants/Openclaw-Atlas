@@ -6,7 +6,6 @@ from openclaw_atlas.replay import replay
 from openclaw_atlas.scoring import DIMENSIONS, score
 from openclaw_atlas.simulator import DeterministicAgent
 
-
 TASKS = {task.id: task for task in load_tasks(Path("datasets/milestone-1.jsonl"))}
 
 
@@ -41,3 +40,10 @@ def test_all_five_dimensions_are_scored() -> None:
     assert tuple(result.scores) == DIMENSIONS
     assert result.overall == 1
 
+
+def test_reference_digest_is_cross_platform_constant() -> None:
+    trace = DeterministicAgent().run(TASKS["timeout-recovery"])
+    assert (
+        trace.digest
+        == "8633cf08c928e138c8e207c60866e0ec1d608149445eb4c4f092f9656c1c5751"
+    )

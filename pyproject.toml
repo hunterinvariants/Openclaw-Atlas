@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "openclaw-atlas"
-version = "0.3.0"
+version = "0.4.0"
 description = "Deterministic evaluation and QA framework for tool-using AI agents"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -14,8 +14,15 @@ keywords = ["ai-agents", "llm-evaluation", "tool-use", "fault-injection", "repro
 dependencies = ["pydantic>=2.7,<3"]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.2", "pytest-cov>=5"]
+dev = [
+  "pytest>=8.2",
+  "pytest-cov>=5",
+  "ruff>=0.15,<0.16",
+  "mypy>=1.15,<2",
+  "build>=1.2,<2",
+]
 duckdb = ["duckdb>=1.2,<2"]
+openai = ["openai>=2,<3"]
 
 [project.scripts]
 atlas = "openclaw_atlas.cli:main"
@@ -35,3 +42,21 @@ show_missing = true
 source = ["openclaw_atlas"]
 branch = true
 
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+
+[tool.mypy]
+python_version = "3.11"
+check_untyped_defs = true
+disallow_untyped_defs = true
+no_implicit_optional = true
+strict_equality = true
+warn_redundant_casts = true
+warn_return_any = true
+warn_unused_ignores = true
+ignore_missing_imports = true

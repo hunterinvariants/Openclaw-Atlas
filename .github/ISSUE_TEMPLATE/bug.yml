@@ -1,0 +1,31 @@
+﻿name: Bug report
+description: Report a reproducible harness, scoring, or replay defect
+title: "[bug] "
+labels: [bug]
+body:
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Observed behavior
+      description: Include the command, task ID, and relevant trace digest.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Remove secrets and production data from traces.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: ATLAS and Python versions
+    validations:
+      required: true

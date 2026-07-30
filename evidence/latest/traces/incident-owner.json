@@ -36,5 +36,6 @@
     }
   ],
   "final_answer": "incident=INC-7, owner=platform",
-  "status": "completed"
+  "status": "completed",
+  "adapter_id": "deterministic-reference"
 }

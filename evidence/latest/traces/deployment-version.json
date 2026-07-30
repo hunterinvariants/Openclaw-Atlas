@@ -37,5 +37,6 @@
     }
   ],
   "final_answer": "environment=production, version=1.8.2",
-  "status": "completed"
+  "status": "completed",
+  "adapter_id": "deterministic-reference"
 }
