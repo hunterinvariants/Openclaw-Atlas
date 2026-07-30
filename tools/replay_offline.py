@@ -49,14 +49,23 @@ def main() -> int:
         print(f"\n=== {trace.task_id}")
 
         # 1. Replay the recorded call order through the fixed matcher.
-        called = [e.tool for e in trace.events if e.kind == "tool_call" and e.tool]
+        # Mirror the adapter: a step is consumed only when the arguments matched,
+        # so a rejected call leaves its step available for a retry.
+        called, rejected = [], []
         consumed: set[int] = set()
-        rejected = []
-        for tool in called:
-            try:
-                consumed.add(_find_step(task, tool, consumed))
-            except ValueError:
-                rejected.append(tool)
+        pending: int | None = None
+        for event in trace.events:
+            if event.kind == "tool_call" and event.tool:
+                called.append(event.tool)
+                try:
+                    pending = _find_step(task, event.tool, consumed)
+                except ValueError:
+                    pending = None
+                    rejected.append(event.tool)
+            elif event.kind == "tool_result" and pending is not None:
+                if event.error not in {"argument_mismatch", "undeclared_tool"}:
+                    consumed.add(pending)
+                pending = None
         if rejected:
             print(f"  step matching : REJECTS {rejected}")
         else:
