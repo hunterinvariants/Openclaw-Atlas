@@ -1,0 +1,133 @@
+{
+  "schema_version": "1.0",
+  "task_id": "five-step-order-recovery",
+  "events": [
+    {
+      "sequence": 0,
+      "kind": "tool_call",
+      "tool": "orders.get",
+      "arguments": {
+        "id": "O-311"
+      },
+      "result": null,
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 1,
+      "kind": "tool_result",
+      "tool": "orders.get",
+      "arguments": null,
+      "result": {
+        "order": "O-311",
+        "status": "pending",
+        "customer": "C-77"
+      },
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 2,
+      "kind": "tool_call",
+      "tool": "payments.status",
+      "arguments": {
+        "order": "O-311"
+      },
+      "result": null,
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 3,
+      "kind": "tool_result",
+      "tool": "payments.status",
+      "arguments": null,
+      "result": null,
+      "error": "stale_data",
+      "attempt": 1
+    },
+    {
+      "sequence": 4,
+      "kind": "tool_call",
+      "tool": "payments.status",
+      "arguments": {
+        "order": "O-311"
+      },
+      "result": null,
+      "error": null,
+      "attempt": 2
+    },
+    {
+      "sequence": 5,
+      "kind": "tool_result",
+      "tool": "payments.status",
+      "arguments": null,
+      "result": {
+        "payment": "captured",
+        "amount": 240
+      },
+      "error": null,
+      "attempt": 2
+    },
+    {
+      "sequence": 6,
+      "kind": "tool_call",
+      "tool": "crm.get_customer",
+      "arguments": {
+        "id": "C-77"
+      },
+      "result": null,
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 7,
+      "kind": "tool_result",
+      "tool": "crm.get_customer",
+      "arguments": null,
+      "result": {
+        "customer": "C-77",
+        "tier": "silver"
+      },
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 8,
+      "kind": "tool_call",
+      "tool": "shipping.quote",
+      "arguments": {
+        "tier": "silver",
+        "amount": 240
+      },
+      "result": null,
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 9,
+      "kind": "tool_result",
+      "tool": "shipping.quote",
+      "arguments": null,
+      "result": {
+        "carrier": "express",
+        "cost": 12
+      },
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 10,
+      "kind": "final",
+      "tool": null,
+      "arguments": null,
+      "result": "customer=C-77, order=O-311, status=pending | amount=240, payment=captured | customer=C-77, tier=silver | carrier=express, cost=12",
+      "error": null,
+      "attempt": 1
+    }
+  ],
+  "final_answer": "customer=C-77, order=O-311, status=pending | amount=240, payment=captured | customer=C-77, tier=silver | carrier=express, cost=12",
+  "status": "completed",
+  "adapter_id": "deterministic-reference",
+  "usage": {}
+}

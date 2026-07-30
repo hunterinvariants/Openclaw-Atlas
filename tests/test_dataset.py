@@ -7,10 +7,12 @@ from openclaw_atlas.io import load_tasks
 DATASET = Path("datasets/milestone-1.jsonl")
 
 
-def test_milestone_has_twenty_two_tasks_plus_four_controls() -> None:
+def test_milestone_ids_are_unique_and_controls_are_present() -> None:
     tasks = load_tasks(DATASET)
-    assert len(tasks) == 26
-    assert len({task.id for task in tasks}) == 26
+    assert len({task.id for task in tasks}) == len(tasks)
+    controls = [task for task in tasks if not task.expected_pass]
+    assert len(controls) >= 4, "the suite must keep failing controls"
+    assert any(len(task.workflow) >= 5 for task in tasks), "needs deep workflows"
 
 
 def test_rejects_duplicate_ids(tmp_path: Path) -> None:

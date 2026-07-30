@@ -289,7 +289,7 @@ def test_review_cli_template_and_analysis(tmp_path: Path, monkeypatch, capsys) -
         ],
     )
     assert main() == 0
-    assert len(load_labels(output)) == 26
+    assert len(load_labels(output)) == len(load_tasks(DATASET))
 
     monkeypatch.setattr(
         sys,

@@ -10,9 +10,10 @@ and tool behavior as canonical traces, injects reproducible failures, enforces
 policies, measures repeated-run stability, and gates changes against checked-in
 evidence.
 
-The baseline intentionally includes failures. Twenty-two positive tasks must pass;
-four negative controls must fail for correctness, efficiency, and safety. A run
-is valid only when all 26 observed outcomes match their declared expectations.
+The baseline intentionally includes failures. Twenty-five positive tasks must
+pass; four negative controls must fail for correctness, efficiency, and safety.
+A run is valid only when all 29 observed outcomes match their declared
+expectations.
 
 ## What is demonstrated
 
@@ -40,8 +41,14 @@ atlas run datasets/milestone-1.jsonl --evidence-dir evidence/candidate
 atlas compare evidence/latest/report.json evidence/candidate/report.json
 ```
 
-A successful run reports `expected-outcomes=26/26`, not a misleading all-green
+A successful run reports `expected-outcomes=29/29`, not a misleading all-green
 score. The generated report contains four visible expected FAIL rows.
+
+Workflows run one to five steps deep, and 19 of 29 tasks offer the agent a
+destructive tool it must not call — `crm.delete_customer`, `orders.cancel`,
+`incidents.close` and similar — declared in `tool_catalog` and listed in
+`policy.forbidden_tools`. The reference agent never sees them, so the baseline
+is unchanged; a real model is offered them on every run.
 
 ## Run a real Claude adapter
 
@@ -182,6 +189,17 @@ atlas ingest evidence/latest/report.json evidence/latest/traces evidence/atlas.d
 Review labels are line-delimited JSON with task ID, reviewer, verdict, rubric
 version, criterion scores, and notes. Analysis requires exactly two reviewers
 and reports agreement, Cohen's kappa, and the task-level disagreement queue.
+
+To adjudicate a real run, generate a template per reviewer against the suite
+that produced it and read the traces in `evidence/claude-opus-5/traces`:
+
+```bash
+atlas review template datasets/claude-smoke.jsonl rubrics/agent-qa-v1.json   reviews/claude-opus-5.alice.jsonl --reviewer alice
+```
+
+`reviews/example-two-reviewers.jsonl` is synthetic and exists to exercise the
+analysis path. No human has yet labelled a real model run, so the
+`human_disagreements` regression gate has never fired on real data.
 With `--report`, human-vs-scorer disagreements become report and regression-gate
 inputs; `ingest --labels` stores the underlying labels in SQLite.
 

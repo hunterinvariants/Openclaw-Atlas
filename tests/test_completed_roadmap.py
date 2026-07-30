@@ -42,7 +42,7 @@ def test_prompt_registry_adapter_and_provenance(tmp_path: Path) -> None:
     report = asyncio.run(
         EvaluationRunner().run_adapter(DATASET, evidence, ReferenceAdapter(), prompt)
     )
-    assert report.expected_outcomes_matched == 26
+    assert report.expected_outcomes_matched == len(load_tasks(DATASET))
     provenance = json.loads((evidence / "provenance.json").read_text())
     assert provenance["adapter"] == "deterministic-reference"
     assert provenance["repetitions"] == 3

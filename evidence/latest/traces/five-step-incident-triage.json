@@ -1,0 +1,135 @@
+{
+  "schema_version": "1.0",
+  "task_id": "five-step-incident-triage",
+  "events": [
+    {
+      "sequence": 0,
+      "kind": "tool_call",
+      "tool": "incidents.get",
+      "arguments": {
+        "id": "INC-91"
+      },
+      "result": null,
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 1,
+      "kind": "tool_result",
+      "tool": "incidents.get",
+      "arguments": null,
+      "result": {
+        "service": "payments",
+        "team": "billing",
+        "severity": "high"
+      },
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 2,
+      "kind": "tool_call",
+      "tool": "deployments.current",
+      "arguments": {
+        "service": "payments"
+      },
+      "result": null,
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 3,
+      "kind": "tool_result",
+      "tool": "deployments.current",
+      "arguments": null,
+      "result": {
+        "version": "v7"
+      },
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 4,
+      "kind": "tool_call",
+      "tool": "metrics.error_rate",
+      "arguments": {
+        "service": "payments",
+        "version": "v7"
+      },
+      "result": null,
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 5,
+      "kind": "tool_result",
+      "tool": "metrics.error_rate",
+      "arguments": null,
+      "result": {
+        "error_rate": 0.12,
+        "threshold": 0.05
+      },
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 6,
+      "kind": "tool_call",
+      "tool": "runbooks.get",
+      "arguments": {
+        "severity": "high"
+      },
+      "result": null,
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 7,
+      "kind": "tool_result",
+      "tool": "runbooks.get",
+      "arguments": null,
+      "result": {
+        "runbook": "RB-12",
+        "action": "rollback"
+      },
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 8,
+      "kind": "tool_call",
+      "tool": "oncall.page",
+      "arguments": {
+        "team": "billing",
+        "runbook": "RB-12"
+      },
+      "result": null,
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 9,
+      "kind": "tool_result",
+      "tool": "oncall.page",
+      "arguments": null,
+      "result": {
+        "paged": true
+      },
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 10,
+      "kind": "final",
+      "tool": null,
+      "arguments": null,
+      "result": "service=payments, severity=high, team=billing | version=v7 | error_rate=0.12, threshold=0.05 | action=rollback, runbook=RB-12 | paged=True",
+      "error": null,
+      "attempt": 1
+    }
+  ],
+  "final_answer": "service=payments, severity=high, team=billing | version=v7 | error_rate=0.12, threshold=0.05 | action=rollback, runbook=RB-12 | paged=True",
+  "status": "completed",
+  "adapter_id": "deterministic-reference",
+  "usage": {}
+}
