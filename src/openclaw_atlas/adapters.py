@@ -79,7 +79,7 @@ class AnthropicMessagesAdapter:
     Sampling parameters are deliberately absent: ``temperature`` / ``top_p`` /
     ``top_k`` are rejected by Claude Opus 5 and its siblings. Reasoning depth is
     controlled with ``effort``, and thinking is left at the model default
-    (adaptive) — disabling it makes the model occasionally emit a tool call as
+    (adaptive). Disabling it makes the model occasionally emit a tool call as
     plain text, which a tool-use evaluation must never silently absorb.
     """
 
@@ -382,7 +382,7 @@ TOOL_NAME_PATTERN = re.compile(r"^[a-zA-Z0-9_-]{1,128}$")
 
 
 def _wire_name(tool: str) -> str:
-    """Anthropic tool names must match ^[a-zA-Z0-9_-]{1,128}$ — dots are out."""
+    """Anthropic tool names must match ^[a-zA-Z0-9_-]{1,128}$, so dots are out."""
     return re.sub(r"[^a-zA-Z0-9_-]", "_", tool)[:128]
 
 
@@ -434,8 +434,8 @@ def _json_type(value: Any) -> str:
 def _find_step(task: TaskSpec, tool: str, consumed: set[int]) -> int:
     """First step matching ``tool`` that has not been satisfied yet.
 
-    Declaration order is not an instruction to the model — nothing in a task
-    says the workflow must be walked front to back, and a real agent routinely
+    Declaration order is not an instruction to the model. Nothing in a task says
+    the workflow must be walked front to back, and a real agent routinely
     reorders independent calls. Matching any unconsumed step keeps that legal
     while still refusing to satisfy the same step twice.
     """

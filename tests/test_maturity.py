@@ -17,7 +17,7 @@ DATASET = Path("datasets/milestone-1.jsonl")
 
 
 class FakeMessages:
-    """Protocol-compatible stand-in — never labelled as real-model evidence."""
+    """Protocol-compatible stand-in. Never labelled as real-model evidence."""
 
     def __init__(
         self, arguments: dict | None = None, stop_reason: str = "tool_use"
