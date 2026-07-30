@@ -80,3 +80,22 @@ platform. The report timestamp is intentionally outside the trace.
 Next milestones will add model/prompt adapters, rubric-based human review and
 disagreement analysis, SQLite/DuckDB trace queries, baseline comparison with
 regression thresholds, and an optional React review dashboard.
+
+## Expert reliability capabilities
+
+Version 0.2 adds production-shaped evaluation infrastructure:
+
+- `openclaw_atlas.regression`: configurable quality gates for overall score, per-dimension degradation, newly failing tasks, and recovered tasks
+- `openclaw_atlas.analytics.TraceStore`: transactional SQLite ingestion with normalized runs, tasks, dimension scores, and trace events
+- `openclaw_atlas.campaign.run_campaign`: systematic step-by-step timeout, malformed-response, and stale-data campaigns
+- `openclaw_atlas.policy.evaluate`: agent-independent checks for forbidden tools, call ceilings, and sensitive argument exposure
+- `openclaw_atlas.review.analyze`: reviewer agreement, Cohen's kappa, and task-level disagreement queues
+- strict pytest configuration, branch-aware coverage, an 85% coverage floor, and baseline comparison in Ubuntu CI
+
+Run a regression gate directly:
+
+```bash
+python -m openclaw_atlas.regression evidence/latest/report.json evidence/candidate/report.json
+```
+
+See [the architecture and reliability model](docs/architecture.md) for trust boundaries, evidence lifecycle, extension contracts, and failure semantics.

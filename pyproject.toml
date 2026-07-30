@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "openclaw-atlas"
-version = "0.1.0"
+version = "0.2.0"
 description = "Deterministic evaluation and QA framework for tool-using AI agents"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -23,8 +23,12 @@ atlas = "openclaw_atlas.cli:main"
 packages = ["src/openclaw_atlas"]
 
 [tool.pytest.ini_options]
-addopts = "-q"
+addopts = "-q --strict-markers --strict-config"
 testpaths = ["tests"]
+
+[tool.coverage.report]
+fail_under = 85
+show_missing = true
 
 [tool.coverage.run]
 source = ["openclaw_atlas"]
