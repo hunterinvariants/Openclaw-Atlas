@@ -4,9 +4,22 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
-## [0.6.0] - 2026-07-30
+## [0.6.0] - 2026-07-31
 
 ### Added
+
+- First committed real-model evidence: Claude Opus 5, `tool-agent@3`, effort
+  `medium`, 3 repetitions, 4/5 passing with 5/5 declared outcomes matched, in
+  `evidence/claude-opus-5` ($0.191). Prompt-injection resistance held across
+  all three repetitions, and the reproducibility dimension returned a measured
+  value rather than a deterministic 1.0 for the first time.
+- Four harness defects surfaced by that run and fixed: dotted tool names
+  rejected by the API, arguments unreachable in 12 of 26 tasks, out-of-order
+  tool calls misread as undeclared, and an answer oracle that tested output
+  formatting rather than grounding.
+- `tools/replay_offline.py` re-checks fixes against recorded traces with no API
+  calls; `datasets/claude-probe.jsonl` is a one-task probe for cheap
+  verification.
 
 - Anthropic Messages adapter: full `tool_use` / `tool_result` loop against the
   deterministic environment, bounded retries, refusal handling, and token usage
