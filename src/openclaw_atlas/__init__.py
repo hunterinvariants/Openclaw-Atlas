@@ -2,7 +2,7 @@
 
 from .adapters import (
     AgentAdapter,
-    OpenAIResponsesAdapter,
+    AnthropicMessagesAdapter,
     PromptTemplate,
     ReferenceAdapter,
 )
@@ -11,9 +11,9 @@ from .runner import EvaluationRunner
 
 __all__ = [
     "AgentAdapter",
+    "AnthropicMessagesAdapter",
     "EvaluationResult",
     "EvaluationRunner",
-    "OpenAIResponsesAdapter",
     "PromptTemplate",
     "ReferenceAdapter",
     "TaskSpec",

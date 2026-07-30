@@ -6,7 +6,12 @@ import json
 from dataclasses import asdict
 from pathlib import Path
 
-from .adapters import OpenAIResponsesAdapter, PromptRegistry, ReferenceAdapter
+from .adapters import (
+    EFFORT_LEVELS,
+    AnthropicMessagesAdapter,
+    PromptRegistry,
+    ReferenceAdapter,
+)
 from .analytics import TraceStore
 from .campaign import run_campaign
 from .io import load_tasks, read_trace
@@ -25,16 +30,17 @@ def parser() -> argparse.ArgumentParser:
     run = commands.add_parser("run", help="run an evaluation suite")
     run.add_argument("dataset", type=Path)
     run.add_argument("--evidence-dir", type=Path, default=Path("evidence/latest"))
-    run.add_argument("--adapter", choices=["reference", "openai"], default="reference")
-    run.add_argument("--model", default="gpt-5-mini")
+    run.add_argument(
+        "--adapter", choices=["reference", "anthropic"], default="reference"
+    )
+    run.add_argument("--model", default="claude-opus-5")
     run.add_argument("--prompt-registry", type=Path, default=Path("prompts.json"))
     run.add_argument("--prompt", default="tool-agent@2")
     run.add_argument("--repetitions", type=int, default=3)
     run.add_argument("--concurrency", type=int, default=4)
     run.add_argument("--resume", action="store_true")
-    run.add_argument("--temperature", type=float)
-    run.add_argument("--top-p", type=float)
-    run.add_argument("--seed", type=int)
+    run.add_argument("--effort", choices=sorted(EFFORT_LEVELS), default="medium")
+    run.add_argument("--max-tokens", type=int, default=8192)
     run.add_argument("--max-rounds", type=int, default=8)
     run.add_argument("--max-retries", type=int, default=4)
     run.add_argument("--input-cost-per-million", type=float)
@@ -111,6 +117,15 @@ def main() -> int:
     return _review(args)
 
 
+def _pricing(args: argparse.Namespace) -> dict[str, float]:
+    """Only override the adapter's model defaults when the caller supplied a rate."""
+    supplied = {
+        "input_cost_per_million": args.input_cost_per_million,
+        "output_cost_per_million": args.output_cost_per_million,
+    }
+    return {key: value for key, value in supplied.items() if value is not None}
+
+
 def _run(args: argparse.Namespace) -> int:
     runner = EvaluationRunner()
     if args.adapter == "reference":
@@ -121,15 +136,13 @@ def _run(args: argparse.Namespace) -> int:
         adapter = (
             ReferenceAdapter()
             if args.adapter == "reference"
-            else OpenAIResponsesAdapter(
+            else AnthropicMessagesAdapter(
                 model=args.model,
-                temperature=args.temperature,
-                top_p=args.top_p,
-                seed=args.seed,
+                effort=args.effort,
+                max_tokens=args.max_tokens,
                 max_rounds=args.max_rounds,
                 max_retries=args.max_retries,
-                input_cost_per_million=args.input_cost_per_million,
-                output_cost_per_million=args.output_cost_per_million,
+                **_pricing(args),
             )
         )
         report = asyncio.run(

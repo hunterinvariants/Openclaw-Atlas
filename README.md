@@ -17,7 +17,7 @@ is valid only when all 26 observed outcomes match their declared expectations.
 ## What is demonstrated
 
 - Strict, versioned Pydantic and JSONL contracts with unknown-field rejection
-- A deterministic reference adapter and a real OpenAI Responses tool-call loop
+- A deterministic reference adapter and a real Anthropic Messages tool-call loop
 - Canonical trace capture with adapter identity and cross-platform digest replay
 - N-run structural stability for stochastic adapters
 - Timeout, malformed-response, stale-data, permission, and injected-instruction fault injection
@@ -42,23 +42,38 @@ atlas compare evidence/latest/report.json evidence/candidate/report.json
 A successful run reports `expected-outcomes=26/26`, not a misleading all-green
 score. The generated report contains four visible expected FAIL rows.
 
-## Run a real OpenAI adapter
+## Run a real Claude adapter
 
-The optional adapter sends the versioned prompt and tool schemas to the OpenAI
-Responses API, executes returned function calls against the deterministic fake
-environment, returns tool results to the model, and captures the complete trace.
+The optional adapter sends the versioned prompt and tool schemas to the Anthropic
+Messages API, executes returned `tool_use` blocks against the deterministic fake
+environment, returns `tool_result` blocks to the model, and captures the complete
+trace including token usage.
 
 ```bash
-python -m pip install -e ".[openai]"
-# Set OPENAI_API_KEY in your environment.
-atlas run datasets/milestone-1.jsonl \
-  --adapter openai \
-  --model gpt-5-mini \
+python -m pip install -e ".[anthropic]"
+# Set ANTHROPIC_API_KEY in your environment.
+atlas run datasets/claude-smoke.jsonl \
+  --adapter anthropic \
+  --model claude-opus-5 \
+  --effort medium \
   --prompt tool-agent@2 \
   --repetitions 3 \
   --concurrency 4 \
-  --evidence-dir evidence/openai
+  --evidence-dir evidence/claude-opus-5
 ```
+
+Reasoning depth is controlled with `--effort` (`low` … `max`); thinking is left
+at the model default. The adapter never sends `temperature`, `top_p`, or `top_k`
+— this model family rejects them — so response variety is a property of the
+model, which is exactly what the N-run stability score is there to measure.
+
+Point real-model runs at `datasets/claude-smoke.jsonl` rather than
+`datasets/milestone-1.jsonl`. The full suite contains agent-pinned scorer
+controls (`reference_agent: "naive"`) that only mean something under the
+reference adapter; a model that behaves *correctly* on those would score PASS
+against `expected_pass: false` and fail the run for the wrong reason. Passing
+such a dataset to a non-reference adapter is rejected with a clear error rather
+than producing a misleading outcome mismatch.
 
 Resume is explicit and off by default. Add `--resume` only to reuse `runs/<task>/<repetition>.json`; final `traces/` files are never treated as cache.
 
@@ -75,11 +90,14 @@ adapter.
 
 ### Real-model evidence policy
 
-`datasets/openai-smoke.jsonl` is a five-task paid smoke suite. Real output belongs
-under `evidence/openai-<model>/` and must include its generated report, traces,
-and provenance. The repository never labels protocol-fake tests as real-model
-evidence. A maintainer must supply `OPENAI_API_KEY`; no credential was available
-for the v0.6.0 evidence refresh.
+`datasets/claude-smoke.jsonl` is a five-task paid smoke suite: three positive
+lookups, one negative control that must fail, and the prompt-injection task with
+its forbidden `admin.delete` distractor. Real output belongs under
+`evidence/claude-<model>/` and must include its generated report, traces, and
+provenance. The repository never labels protocol-fake tests as real-model
+evidence — the adapter's tests drive a stand-in client, and no committed
+evidence has ever been produced by a real model. A maintainer must supply
+`ANTHROPIC_API_KEY`; no credential was available for the v0.6.0 refresh.
 
 ## Dataset and negative controls
 

@@ -2,7 +2,7 @@
 
 ATLAS separates execution from judgment. A task is immutable input, an adapter
 produces a canonical event trace, and independent evaluators consume that trace.
-The same task can run through the deterministic reference adapter, the OpenAI
+The same task can run through the deterministic reference adapter, the Anthropic
 Responses adapter, or a user-supplied adapter without changing fault injection,
 policy checks, storage, or regression gates.
 
@@ -10,7 +10,7 @@ policy checks, storage, or regression gates.
 
 - Dataset fixtures are untrusted and validated with strict Pydantic schemas.
 - Tool calls cross a policy boundary evaluated from the captured trace.
-- The OpenAI adapter exposes only tools declared by the task and rejects calls to
+- The Anthropic adapter exposes only tools declared by the task and rejects calls to
   undeclared tools.
 - Trace digests exclude wall-clock time and include adapter identity.
 - SQLite ingestion is transactional and all query parameters are bound.

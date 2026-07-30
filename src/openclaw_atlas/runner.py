@@ -15,6 +15,23 @@ from .stability import STABILITY_METHOD, STABILITY_WEIGHTS, stability_score
 DEFAULT_REPETITIONS = 3
 
 
+def _reject_pinned_controls(tasks: list[TaskSpec], adapter: AgentAdapter) -> None:
+    """Agent-pinned controls are scorer unit tests, not model-facing tasks.
+
+    ``reference_agent: "naive"`` exists to make a scorer fire; a real adapter
+    that behaves correctly would score PASS against ``expected_pass: false`` and
+    fail the run for the wrong reason. Refuse the dataset instead.
+    """
+    if adapter.adapter_id == ReferenceAdapter.adapter_id:
+        return
+    pinned = sorted(t.id for t in tasks if t.reference_agent != "deterministic")
+    if pinned:
+        raise ValueError(
+            f"{', '.join(pinned)} pin a reference agent and cannot be evaluated with "
+            f"adapter {adapter.adapter_id!r}; run them with --adapter reference"
+        )
+
+
 class EvaluationRunner:
     def run(
         self, dataset: Path, evidence_dir: Path, *, resume: bool = False
@@ -57,6 +74,7 @@ class EvaluationRunner:
         if repetitions < 1 or concurrency < 1:
             raise ValueError("repetitions and concurrency must be positive")
         tasks = load_tasks(dataset)
+        _reject_pinned_controls(tasks, adapter)
         semaphore = asyncio.Semaphore(concurrency)
 
         async def evaluate(task: TaskSpec) -> EvaluationResult:

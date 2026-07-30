@@ -6,6 +6,32 @@ All notable changes to this project are documented here. The format follows
 
 ## [0.6.0] - 2026-07-30
 
+### Added
+
+- Anthropic Messages adapter: full `tool_use` / `tool_result` loop against the
+  deterministic environment, bounded retries, refusal handling, and token usage
+  capture (including cache-read/write token fields).
+- `--effort` and `--max-tokens` run flags; `datasets/claude-smoke.jsonl` paid
+  smoke suite carrying a negative control and the prompt-injection task.
+- Agent-pinned scorer controls are refused for non-reference adapters instead of
+  producing a misleading outcome mismatch.
+
+### Changed
+
+- Replaced the OpenAI Responses adapter with the Anthropic Messages adapter;
+  `--adapter openai` is now `--adapter anthropic`, default model `claude-opus-5`.
+- Dropped `--temperature` / `--top-p` / `--seed`: this model family rejects
+  sampling parameters. Reasoning depth is set with `--effort`, and thinking is
+  left at the model default so tool calls are never emitted as plain text.
+- Optional extra renamed `openai` to `anthropic`.
+- Real-model runs are documented against the smoke suite, not the full dataset.
+
+### Removed
+
+- `OpenAIResponsesAdapter` and the `openai` optional dependency.
+
+## [0.6.0] - 2026-07-30
+
 - Prevented reference runs from treating final evidence as a resumable cache; resume is explicit and isolated under `runs/`.
 - Delivered injected instructions through tool output and added a naive-agent forbidden-tool negative control.
 - Corrected per-key, per-repetition usage and cost aggregation.

@@ -14,6 +14,8 @@ from .environment import FakeToolEnvironment, ToolFailure
 from .models import TaskSpec, Trace, TraceEvent, WorkflowStep
 from .simulator import DeterministicAgent, NaiveAgent
 
+EFFORT_LEVELS = frozenset({"low", "medium", "high", "xhigh", "max"})
+
 
 @dataclass(frozen=True)
 class PromptTemplate:
@@ -70,46 +72,57 @@ class CallableAdapter:
         return trace.model_copy(update={"adapter_id": self.adapter_id})
 
 
-class OpenAIResponsesAdapter:
-    """Responses API tool loop with bounded retries and honest usage capture."""
+class AnthropicMessagesAdapter:
+    """Messages API tool loop with bounded retries and honest usage capture.
+
+    Sampling parameters are deliberately absent: ``temperature`` / ``top_p`` /
+    ``top_k`` are rejected by Claude Opus 5 and its siblings. Reasoning depth is
+    controlled with ``effort``, and thinking is left at the model default
+    (adaptive) — disabling it makes the model occasionally emit a tool call as
+    plain text, which a tool-use evaluation must never silently absorb.
+    """
 
     def __init__(
         self,
-        model: str = "gpt-5-mini",
+        model: str = "claude-opus-5",
         *,
         client: Any | None = None,
         max_rounds: int = 8,
         max_retries: int = 4,
-        temperature: float | None = None,
-        top_p: float | None = None,
-        seed: int | None = None,
-        input_cost_per_million: float | None = None,
-        output_cost_per_million: float | None = None,
+        max_tokens: int = 8192,
+        effort: str | None = "medium",
+        input_cost_per_million: float | None = 5.0,
+        output_cost_per_million: float | None = 25.0,
     ) -> None:
         if min(max_rounds, max_retries + 1) < 1:
             raise ValueError("round and retry limits must be non-negative")
+        if max_tokens < 1:
+            raise ValueError("max_tokens must be positive")
+        if effort is not None and effort not in EFFORT_LEVELS:
+            raise ValueError(f"effort must be one of {sorted(EFFORT_LEVELS)}")
         if client is None:
             try:
-                from openai import AsyncOpenAI
+                from anthropic import AsyncAnthropic
             except ImportError as exc:
-                raise RuntimeError("install openclaw-atlas[openai]") from exc
-            client = AsyncOpenAI()
+                raise RuntimeError("install openclaw-atlas[anthropic]") from exc
+            client = AsyncAnthropic()
         self.client, self.model = client, model
         self.max_rounds, self.max_retries = max_rounds, max_retries
-        self.temperature, self.top_p, self.seed = temperature, top_p, seed
+        self.max_tokens, self.effort = max_tokens, effort
         self.input_cost_per_million = input_cost_per_million
         self.output_cost_per_million = output_cost_per_million
-        self.adapter_id = f"openai-responses:{model}"
+        self.adapter_id = f"anthropic-messages:{model}"
 
     def provenance(self) -> dict[str, Any]:
         return {
             "adapter": self.adapter_id,
             "model": self.model,
             "sampling": {
-                "temperature": self.temperature,
-                "top_p": self.top_p,
-                "seed": self.seed,
+                "effort": self.effort,
+                "thinking": "model-default (adaptive)",
+                "note": "temperature/top_p/top_k are rejected by this model family",
             },
+            "max_tokens": self.max_tokens,
             "max_rounds": self.max_rounds,
             "max_retries": self.max_retries,
             "pricing_usd_per_million_tokens": {
@@ -121,7 +134,7 @@ class OpenAIResponsesAdapter:
     async def _create(self, **kwargs: Any) -> Any:
         for attempt in range(self.max_retries + 1):
             try:
-                return await self.client.responses.create(**kwargs)
+                return await self.client.messages.create(**kwargs)
             except Exception as exc:
                 status = getattr(exc, "status_code", None)
                 if attempt == self.max_retries or (
@@ -134,11 +147,9 @@ class OpenAIResponsesAdapter:
         raise AssertionError("unreachable")
 
     async def run(self, task: TaskSpec, prompt: PromptTemplate) -> Trace:
-        environment, events, inputs = (
-            FakeToolEnvironment(task),
-            [],
-            [{"role": "user", "content": task.prompt}],
-        )
+        environment: FakeToolEnvironment = FakeToolEnvironment(task)
+        events: list[TraceEvent] = []
+        messages: list[dict[str, Any]] = [{"role": "user", "content": task.prompt}]
         sequence, next_step = 0, 0
         catalog = _unique_steps([*task.workflow, *task.tool_catalog])
         tools = [_tool_definition(step) for step in catalog]
@@ -146,47 +157,43 @@ class OpenAIResponsesAdapter:
         for _ in range(self.max_rounds):
             kwargs: dict[str, Any] = {
                 "model": self.model,
-                "instructions": prompt.render(task),
-                "input": inputs,
+                "max_tokens": self.max_tokens,
+                "system": prompt.render(task),
+                "messages": messages,
                 "tools": cast(Any, tools),
             }
-            for key, value in (
-                ("temperature", self.temperature),
-                ("top_p", self.top_p),
-                ("seed", self.seed),
-            ):
-                if value is not None:
-                    kwargs[key] = value
+            if self.effort is not None:
+                kwargs["output_config"] = {"effort": self.effort}
             response = await self._create(**kwargs)
             _merge_usage(usage, getattr(response, "usage", None))
-            outputs = list(getattr(response, "output", []))
-            calls = [
-                item for item in outputs if getattr(item, "type", "") == "function_call"
-            ]
+            stop_reason = str(getattr(response, "stop_reason", "") or "")
+            blocks = list(getattr(response, "content", []))
+            if stop_reason == "refusal":
+                return self._terminal(
+                    task,
+                    events,
+                    sequence,
+                    usage,
+                    "Model refused the request.",
+                    "failed",
+                )
+            calls = [b for b in blocks if getattr(b, "type", "") == "tool_use"]
             if not calls:
-                answer = (
-                    str(getattr(response, "output_text", "")).strip()
-                    or "Model returned no final answer."
+                answer = _answer_text(blocks)
+                return self._terminal(
+                    task,
+                    events,
+                    sequence,
+                    usage,
+                    answer or "Model returned no final answer.",
+                    "completed" if answer else "failed",
                 )
-                events.append(
-                    TraceEvent(sequence=sequence, kind="final", result=answer)
-                )
-                return Trace(
-                    task_id=task.id,
-                    events=events,
-                    final_answer=answer,
-                    status="completed"
-                    if getattr(response, "output_text", "")
-                    else "failed",
-                    adapter_id=self.adapter_id,
-                    usage=usage,
-                )
-            inputs.extend(outputs)
+            # Thinking and tool_use blocks must be echoed back unchanged.
+            messages.append({"role": "assistant", "content": blocks})
+            results: list[dict[str, Any]] = []
             for call in calls:
-                tool, arguments = (
-                    str(call.name),
-                    json.loads(getattr(call, "arguments", "{}")),
-                )
+                tool = str(call.name)
+                arguments = dict(getattr(call, "input", {}) or {})
                 try:
                     step_index = _find_step(task, tool, next_step)
                 except ValueError:
@@ -207,13 +214,8 @@ class OpenAIResponsesAdapter:
                         ]
                     )
                     sequence += 2
-                    output = {"ok": False, "error": "undeclared_tool"}
-                    inputs.append(
-                        {
-                            "type": "function_call_output",
-                            "call_id": str(call.call_id),
-                            "output": json.dumps(output),
-                        }
+                    results.append(
+                        _tool_result(call.id, {"ok": False, "error": "undeclared_tool"})
                     )
                     continue
                 step, attempt = (
@@ -267,20 +269,33 @@ class OpenAIResponsesAdapter:
                         )
                         output = {"ok": False, "error": exc.kind.value}
                 sequence += 1
-                inputs.append(
-                    {
-                        "type": "function_call_output",
-                        "call_id": str(call.call_id),
-                        "output": json.dumps(output, sort_keys=True),
-                    }
-                )
-        answer = "Model exceeded the tool-call round limit."
+                results.append(_tool_result(call.id, output))
+            # All results for one assistant turn go back in a single user message.
+            messages.append({"role": "user", "content": results})
+        return self._terminal(
+            task,
+            events,
+            sequence,
+            usage,
+            "Model exceeded the tool-call round limit.",
+            "failed",
+        )
+
+    def _terminal(
+        self,
+        task: TaskSpec,
+        events: list[TraceEvent],
+        sequence: int,
+        usage: dict[str, int | float],
+        answer: str,
+        status: str,
+    ) -> Trace:
         events.append(TraceEvent(sequence=sequence, kind="final", result=answer))
         return Trace(
             task_id=task.id,
             events=events,
             final_answer=answer,
-            status="failed",
+            status=cast(Any, status),
             adapter_id=self.adapter_id,
             usage=usage,
         )
@@ -308,13 +323,38 @@ class PromptRegistry:
         )
 
 
+USAGE_FIELDS = (
+    "input_tokens",
+    "output_tokens",
+    "cache_creation_input_tokens",
+    "cache_read_input_tokens",
+)
+
+
 def _merge_usage(target: dict[str, int | float], usage: Any) -> None:
     if usage is None:
         return
-    for key in ("input_tokens", "output_tokens", "total_tokens"):
+    for key in USAGE_FIELDS:
         value = getattr(usage, key, None)
         if isinstance(value, (int, float)):
             target[key] = target.get(key, 0) + value
+
+
+def _answer_text(blocks: list[Any]) -> str:
+    return "\n".join(
+        str(getattr(block, "text", ""))
+        for block in blocks
+        if getattr(block, "type", "") == "text"
+    ).strip()
+
+
+def _tool_result(tool_use_id: str, output: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "type": "tool_result",
+        "tool_use_id": str(tool_use_id),
+        "content": json.dumps(output, sort_keys=True),
+        "is_error": not output.get("ok", False),
+    }
 
 
 def _unique_steps(steps: list[WorkflowStep]) -> list[WorkflowStep]:
@@ -326,10 +366,9 @@ def _tool_definition(step: WorkflowStep) -> dict[str, Any]:
         name: {"type": _json_type(value)} for name, value in step.arguments.items()
     }
     return {
-        "type": "function",
         "name": step.tool,
         "description": f"Evaluation tool: {step.tool}",
-        "parameters": {
+        "input_schema": {
             "type": "object",
             "properties": properties,
             "required": sorted(properties),

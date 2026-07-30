@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "hunterinvariants" }]
-keywords = ["ai-agents", "llm-evaluation", "tool-use", "fault-injection", "reproducibility"]
+keywords = ["ai-agents", "llm-evaluation", "tool-use", "fault-injection", "reproducibility", "claude", "anthropic"]
 dependencies = ["pydantic>=2.7,<3"]
 
 [project.optional-dependencies]
@@ -22,7 +22,7 @@ dev = [
   "build>=1.2,<2",
 ]
 duckdb = ["duckdb>=1.2,<2"]
-openai = ["openai>=2,<3"]
+anthropic = ["anthropic>=0.80,<1"]
 
 [project.scripts]
 atlas = "openclaw_atlas.cli:main"

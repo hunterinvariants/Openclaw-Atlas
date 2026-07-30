@@ -11,3 +11,7 @@ evidence/ci/
 
 evidence/candidate/
 evidence/**/runs/
+
+evidence/smoke-ref/
+evidence/claude-*/
+dist/

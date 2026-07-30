@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import asyncio
+import json
 from pathlib import Path
 from types import SimpleNamespace
 
-from openclaw_atlas.adapters import OpenAIResponsesAdapter, PromptRegistry
+import pytest
+
+from openclaw_atlas.adapters import AnthropicMessagesAdapter, PromptRegistry
 from openclaw_atlas.io import load_tasks
 from openclaw_atlas.review import analyze, load_labels, load_rubric, write_template
 from openclaw_atlas.runner import EvaluationRunner
@@ -13,43 +16,86 @@ from openclaw_atlas.stability import stability_score
 DATASET = Path("datasets/milestone-1.jsonl")
 
 
-class FakeResponses:
-    def __init__(self, arguments: str = '{"id":"C-100"}') -> None:
+class FakeMessages:
+    """Protocol-compatible stand-in — never labelled as real-model evidence."""
+
+    def __init__(
+        self, arguments: dict | None = None, stop_reason: str = "tool_use"
+    ) -> None:
         self.calls = 0
-        self.arguments = arguments
-        self.requests = []
+        self.arguments = {"id": "C-100"} if arguments is None else arguments
+        self.stop_reason = stop_reason
+        self.requests: list[dict] = []
 
     async def create(self, **kwargs):
         self.calls += 1
         self.requests.append(kwargs)
+        usage = SimpleNamespace(input_tokens=120, output_tokens=30)
+        if self.stop_reason == "refusal":
+            return SimpleNamespace(content=[], stop_reason="refusal", usage=usage)
         if self.calls == 1:
-            call = SimpleNamespace(
-                type="function_call",
+            block = SimpleNamespace(
+                type="tool_use",
+                id="toolu_1",
                 name="crm.get_customer",
-                arguments=self.arguments,
-                call_id="call-1",
+                input=self.arguments,
             )
-            return SimpleNamespace(output=[call], output_text="")
-        return SimpleNamespace(output=[], output_text="customer=C-100, tier=gold")
+            return SimpleNamespace(content=[block], stop_reason="tool_use", usage=usage)
+        text = SimpleNamespace(type="text", text="customer=C-100, tier=gold")
+        return SimpleNamespace(content=[text], stop_reason="end_turn", usage=usage)
 
 
 class FakeClient:
-    def __init__(self, arguments: str = '{"id":"C-100"}') -> None:
-        self.responses = FakeResponses(arguments)
+    def __init__(self, arguments: dict | None = None, stop_reason: str = "tool_use"):
+        self.messages = FakeMessages(arguments, stop_reason)
 
 
-def test_openai_adapter_executes_model_tool_call_against_fake_environment() -> None:
+def _adapter(**kwargs) -> AnthropicMessagesAdapter:
+    return AnthropicMessagesAdapter(model="fake-model", **kwargs)
+
+
+def test_anthropic_adapter_executes_model_tool_call_against_fake_environment() -> None:
     task = load_tasks(DATASET)[0]
     prompt = PromptRegistry.from_json(Path("prompts.json")).get("tool-agent", "2")
-    adapter = OpenAIResponsesAdapter(client=FakeClient(), model="fake-model")
-    trace = asyncio.run(adapter.run(task, prompt))
+    client = FakeClient()
+    trace = asyncio.run(_adapter(client=client).run(task, prompt))
     assert trace.status == "completed"
-    assert trace.adapter_id == "openai-responses:fake-model"
+    assert trace.adapter_id == "anthropic-messages:fake-model"
     assert [event.kind for event in trace.events] == [
         "tool_call",
         "tool_result",
         "final",
     ]
+    assert trace.usage == {"input_tokens": 240, "output_tokens": 60}
+    request = client.messages.requests[0]
+    assert request["tools"][0]["input_schema"]["additionalProperties"] is False
+    assert request["output_config"] == {"effort": "medium"}
+    assert not {"temperature", "top_p", "top_k"} & request.keys()
+
+
+def test_anthropic_adapter_records_refusal_as_a_failed_trace() -> None:
+    task = load_tasks(DATASET)[0]
+    prompt = PromptRegistry.from_json(Path("prompts.json")).get("tool-agent", "2")
+    trace = asyncio.run(
+        _adapter(client=FakeClient(stop_reason="refusal")).run(task, prompt)
+    )
+    assert trace.status == "failed"
+    assert "refused" in trace.final_answer.lower()
+
+
+def test_anthropic_adapter_rejects_invalid_effort() -> None:
+    with pytest.raises(ValueError, match="effort"):
+        _adapter(client=FakeClient(), effort="turbo")
+
+
+def test_agent_pinned_controls_are_refused_for_non_reference_adapters() -> None:
+    prompt = PromptRegistry.from_json(Path("prompts.json")).get("tool-agent", "2")
+    with pytest.raises(ValueError, match="control-injection-following"):
+        asyncio.run(
+            EvaluationRunner().run_adapter(
+                DATASET, Path("unused"), _adapter(client=FakeClient()), prompt
+            )
+        )
 
 
 def test_negative_controls_produce_expected_red_rows(tmp_path: Path) -> None:
@@ -86,18 +132,27 @@ def test_review_jsonl_round_trip_and_disagreement(tmp_path: Path) -> None:
     assert result.disagreements == ["a"]
 
 
-def test_openai_adapter_rejects_wrong_tool_arguments() -> None:
+def test_anthropic_adapter_rejects_wrong_tool_arguments() -> None:
     task = load_tasks(DATASET)[0]
     prompt = PromptRegistry.from_json(Path("prompts.json")).get("tool-agent", "2")
-    adapter = OpenAIResponsesAdapter(
-        client=FakeClient('{"id":"WRONG"}'), model="fake-model"
-    )
-    trace = asyncio.run(adapter.run(task, prompt))
+    client = FakeClient({"id": "WRONG"})
+    trace = asyncio.run(_adapter(client=client).run(task, prompt))
     assert any(event.error == "argument_mismatch" for event in trace.events)
     assert not any(
         event.kind == "tool_result" and event.result == task.workflow[0].response
         for event in trace.events
     )
+    # The mismatch must not hand the correct arguments back to the model.
+    results = [
+        block
+        for message in client.messages.requests[-1]["messages"]
+        if isinstance(message.get("content"), list)
+        for block in message["content"]
+        if isinstance(block, dict) and block.get("type") == "tool_result"
+    ]
+    assert results and all(block["is_error"] for block in results)
+    returned = json.dumps(results)
+    assert "argument_mismatch" in returned and "C-100" not in returned
 
 
 def test_regression_rejects_negative_control_that_unexpectedly_passes(
