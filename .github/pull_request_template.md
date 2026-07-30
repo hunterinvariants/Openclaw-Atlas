@@ -1,4 +1,4 @@
-﻿## Change summary
+## Change summary
 
 ## Reliability evidence
 

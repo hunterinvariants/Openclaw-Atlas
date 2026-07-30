@@ -1,0 +1,110 @@
+{
+  "schema_version": "1.0",
+  "task_id": "four-step-partial-recovery",
+  "events": [
+    {
+      "sequence": 0,
+      "kind": "tool_call",
+      "tool": "services.health",
+      "arguments": {
+        "service": "checkout"
+      },
+      "result": null,
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 1,
+      "kind": "tool_result",
+      "tool": "services.health",
+      "arguments": null,
+      "result": {
+        "state": "degraded"
+      },
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 2,
+      "kind": "tool_call",
+      "tool": "deployments.current",
+      "arguments": {
+        "service": "checkout"
+      },
+      "result": null,
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 3,
+      "kind": "tool_result",
+      "tool": "deployments.current",
+      "arguments": null,
+      "result": {
+        "version": "v44"
+      },
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 4,
+      "kind": "tool_call",
+      "tool": "dependencies.status",
+      "arguments": {
+        "service": "checkout"
+      },
+      "result": null,
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 5,
+      "kind": "tool_result",
+      "tool": "dependencies.status",
+      "arguments": null,
+      "result": {
+        "database": "healthy",
+        "payments": "degraded"
+      },
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 6,
+      "kind": "tool_call",
+      "tool": "rollbacks.plan",
+      "arguments": {
+        "service": "checkout",
+        "version": "v44"
+      },
+      "result": null,
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 7,
+      "kind": "tool_result",
+      "tool": "rollbacks.plan",
+      "arguments": null,
+      "result": {
+        "ready": true,
+        "target": "v43"
+      },
+      "error": null,
+      "attempt": 1
+    },
+    {
+      "sequence": 8,
+      "kind": "final",
+      "tool": null,
+      "arguments": null,
+      "result": "state=degraded | version=v44 | database=healthy, payments=degraded | ready=True, target=v43",
+      "error": null,
+      "attempt": 1
+    }
+  ],
+  "final_answer": "state=degraded | version=v44 | database=healthy, payments=degraded | ready=True, target=v43",
+  "status": "completed",
+  "adapter_id": "deterministic-reference",
+  "usage": {}
+}

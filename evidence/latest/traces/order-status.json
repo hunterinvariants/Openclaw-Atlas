@@ -37,5 +37,6 @@
   ],
   "final_answer": "order=O-900, status=shipped",
   "status": "completed",
-  "adapter_id": "deterministic-reference"
+  "adapter_id": "deterministic-reference",
+  "usage": {}
 }

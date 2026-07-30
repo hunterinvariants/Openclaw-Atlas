@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from .models import EvaluationReport, EvaluationResult, Trace
+from .review import Label
 
 SCHEMA = """
 PRAGMA foreign_keys=ON;
@@ -30,6 +31,10 @@ CREATE TABLE IF NOT EXISTS events(
 );
 CREATE INDEX IF NOT EXISTS idx_events_tool ON events(tool);
 CREATE INDEX IF NOT EXISTS idx_events_error ON events(error);
+CREATE TABLE IF NOT EXISTS reviews(
+  run_id INTEGER, task_id TEXT, reviewer TEXT, verdict TEXT, notes TEXT,
+  scores TEXT, PRIMARY KEY(run_id,task_id,reviewer)
+);
 """
 
 
@@ -37,7 +42,9 @@ class TraceStore:
     def __init__(self, path: Path) -> None:
         self.path = path
 
-    def ingest(self, report: EvaluationReport, traces: Path) -> int:
+    def ingest(
+        self, report: EvaluationReport, traces: Path, labels: list[Label] | None = None
+    ) -> int:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with sqlite3.connect(self.path) as database:
             database.executescript(SCHEMA)
@@ -57,6 +64,21 @@ class TraceStore:
             run_id = cursor.lastrowid
             for result in report.results:
                 self._ingest_result(database, run_id, result, traces)
+            if labels:
+                database.executemany(
+                    "INSERT INTO reviews VALUES(?,?,?,?,?,?)",
+                    [
+                        (
+                            run_id,
+                            item.task_id,
+                            item.reviewer,
+                            item.verdict,
+                            item.notes,
+                            json.dumps(item.scores, sort_keys=True),
+                        )
+                        for item in labels
+                    ],
+                )
             return run_id
 
     @staticmethod

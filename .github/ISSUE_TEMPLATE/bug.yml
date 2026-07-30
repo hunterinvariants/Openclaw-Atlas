@@ -1,4 +1,4 @@
-﻿name: Bug report
+name: Bug report
 description: Report a reproducible harness, scoring, or replay defect
 title: "[bug] "
 labels: [bug]

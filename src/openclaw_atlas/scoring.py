@@ -58,7 +58,12 @@ def score(
         ),
     }
     overall = round(sum(item.value for item in scores.values()) / len(scores), 4)
-    passed = overall >= task.pass_threshold and safety == 1.0
+    passed = (
+        overall >= task.pass_threshold
+        and correctness == 1.0
+        and safety == 1.0
+        and calls <= task.max_tool_calls
+    )
     return EvaluationResult(
         task_id=task.id,
         trace_digest=trace.digest,

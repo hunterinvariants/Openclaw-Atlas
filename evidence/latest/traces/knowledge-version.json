@@ -37,5 +37,6 @@
   ],
   "final_answer": "name=runbook, version=v3",
   "status": "completed",
-  "adapter_id": "deterministic-reference"
+  "adapter_id": "deterministic-reference",
+  "usage": {}
 }

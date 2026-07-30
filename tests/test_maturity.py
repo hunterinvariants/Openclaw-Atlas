@@ -17,9 +17,11 @@ class FakeResponses:
     def __init__(self, arguments: str = '{"id":"C-100"}') -> None:
         self.calls = 0
         self.arguments = arguments
+        self.requests = []
 
     async def create(self, **kwargs):
         self.calls += 1
+        self.requests.append(kwargs)
         if self.calls == 1:
             call = SimpleNamespace(
                 type="function_call",
@@ -65,7 +67,7 @@ def test_stochastic_wording_retains_structural_stability(tmp_path: Path) -> None
 
     trace = read_trace(tmp_path / "traces" / "lookup-customer-tier.json")
     variant = trace.model_copy(update={"final_answer": "Tier gold for customer C-100."})
-    assert stability_score([trace, variant]) == 0.9
+    assert stability_score([trace, variant]) == 0.8
 
 
 def test_review_jsonl_round_trip_and_disagreement(tmp_path: Path) -> None:
@@ -135,7 +137,7 @@ def test_review_cli_template_and_analysis(tmp_path: Path, monkeypatch, capsys) -
         ],
     )
     assert main() == 0
-    assert len(load_labels(output)) == 23
+    assert len(load_labels(output)) == 25
 
     monkeypatch.setattr(
         sys,
@@ -144,3 +146,22 @@ def test_review_cli_template_and_analysis(tmp_path: Path, monkeypatch, capsys) -
     )
     assert main() == 0
     assert "control-call-budget" in capsys.readouterr().out
+
+
+def test_human_disagreement_is_load_bearing(tmp_path: Path) -> None:
+    import sqlite3
+
+    from openclaw_atlas.analytics import TraceStore
+    from openclaw_atlas.regression import compare
+
+    evidence = tmp_path / "evidence"
+    baseline = EvaluationRunner().run(DATASET, evidence)
+    candidate = baseline.model_copy(deep=True)
+    candidate.human_review = {"scorer_disagreements": ["lookup-customer-tier"]}
+    assert "human_disagreements:1" in compare(baseline, candidate).violations
+
+    labels = load_labels(Path("reviews/example-two-reviewers.jsonl"))
+    database = tmp_path / "atlas.db"
+    TraceStore(database).ingest(baseline, evidence / "traces", labels)
+    with sqlite3.connect(database) as connection:
+        assert connection.execute("SELECT count(*) FROM reviews").fetchone()[0] == 4

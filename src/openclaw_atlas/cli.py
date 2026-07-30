@@ -30,6 +30,15 @@ def parser() -> argparse.ArgumentParser:
     run.add_argument("--prompt-registry", type=Path, default=Path("prompts.json"))
     run.add_argument("--prompt", default="tool-agent@2")
     run.add_argument("--repetitions", type=int, default=3)
+    run.add_argument("--concurrency", type=int, default=4)
+    run.add_argument("--no-resume", action="store_true")
+    run.add_argument("--temperature", type=float)
+    run.add_argument("--top-p", type=float)
+    run.add_argument("--seed", type=int)
+    run.add_argument("--max-rounds", type=int, default=8)
+    run.add_argument("--max-retries", type=int, default=4)
+    run.add_argument("--input-cost-per-million", type=float)
+    run.add_argument("--output-cost-per-million", type=float)
 
     replay_command = commands.add_parser("replay", help="exact deterministic replay")
     replay_command.add_argument("dataset", type=Path)
@@ -46,6 +55,7 @@ def parser() -> argparse.ArgumentParser:
     ingest.add_argument("report", type=Path)
     ingest.add_argument("traces", type=Path)
     ingest.add_argument("database", type=Path)
+    ingest.add_argument("--labels", type=Path)
 
     query = commands.add_parser("query", help="run a named read-only query")
     query.add_argument("database", type=Path)
@@ -65,6 +75,7 @@ def parser() -> argparse.ArgumentParser:
     template.add_argument("--reviewer", required=True)
     analysis = review_commands.add_parser("analyze", help="analyze two reviewers")
     analysis.add_argument("labels", type=Path)
+    analysis.add_argument("--report", type=Path)
 
     return root
 
@@ -78,7 +89,11 @@ def main() -> int:
     if args.command == "compare":
         return _compare(args)
     if args.command == "ingest":
-        run_id = TraceStore(args.database).ingest(load_report(args.report), args.traces)
+        run_id = TraceStore(args.database).ingest(
+            load_report(args.report),
+            args.traces,
+            load_labels(args.labels) if args.labels else None,
+        )
         print(f"ingested run_id={run_id}")
         return 0
     if args.command == "query":
@@ -98,7 +113,7 @@ def main() -> int:
 
 def _run(args: argparse.Namespace) -> int:
     runner = EvaluationRunner()
-    if args.adapter == "reference" and not args.prompt_registry:
+    if args.adapter == "reference":
         report = runner.run(args.dataset, args.evidence_dir)
     else:
         name, version = args.prompt.rsplit("@", 1)
@@ -106,7 +121,16 @@ def _run(args: argparse.Namespace) -> int:
         adapter = (
             ReferenceAdapter()
             if args.adapter == "reference"
-            else OpenAIResponsesAdapter(model=args.model)
+            else OpenAIResponsesAdapter(
+                model=args.model,
+                temperature=args.temperature,
+                top_p=args.top_p,
+                seed=args.seed,
+                max_rounds=args.max_rounds,
+                max_retries=args.max_retries,
+                input_cost_per_million=args.input_cost_per_million,
+                output_cost_per_million=args.output_cost_per_million,
+            )
         )
         report = asyncio.run(
             runner.run_adapter(
@@ -115,6 +139,8 @@ def _run(args: argparse.Namespace) -> int:
                 adapter,
                 prompt,
                 repetitions=args.repetitions,
+                concurrency=args.concurrency,
+                resume=not args.no_resume,
             )
         )
     print(
@@ -154,7 +180,24 @@ def _review(args: argparse.Namespace) -> int:
         write_template(args.output, task_ids, args.reviewer, load_rubric(args.rubric))
         print(f"wrote {len(task_ids)} labels to {args.output}")
         return 0
-    agreement = analyze(load_labels(args.labels))
+    labels = load_labels(args.labels)
+    agreement = analyze(labels)
+    if args.report:
+        report = load_report(args.report)
+        scorer = {item.task_id: item.passed for item in report.results}
+        disagreements = sorted(
+            label.task_id
+            for label in labels
+            if label.task_id in scorer
+            and (label.verdict == "pass") != scorer[label.task_id]
+        )
+        report.human_review = {
+            **asdict(agreement),
+            "scorer_disagreements": sorted(set(disagreements)),
+        }
+        from .io import write_json
+
+        write_json(args.report, report.model_dump(mode="json"))
     print(json.dumps(asdict(agreement), indent=2))
     return 0
 

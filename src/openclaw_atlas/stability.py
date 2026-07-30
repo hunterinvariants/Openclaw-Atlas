@@ -7,6 +7,9 @@ from difflib import SequenceMatcher
 
 from .models import Trace
 
+STABILITY_METHOD = "structural-v2"
+STABILITY_WEIGHTS = {"status": 0.2, "tools": 0.4, "errors": 0.2, "answer": 0.2}
+
 
 def stability_score(traces: list[Trace]) -> float:
     """Score repeat runs without comparing an adapter to a different agent.
@@ -29,7 +32,12 @@ def _similarity(left: Trace, right: Trace) -> float:
     tools = _sequence_ratio(_tools(left), _tools(right))
     errors = _sequence_ratio(_errors(left), _errors(right))
     answer = float(_normalize(left.final_answer) == _normalize(right.final_answer))
-    return 0.2 * status + 0.5 * tools + 0.2 * errors + 0.1 * answer
+    return (
+        STABILITY_WEIGHTS["status"] * status
+        + STABILITY_WEIGHTS["tools"] * tools
+        + STABILITY_WEIGHTS["errors"] * errors
+        + STABILITY_WEIGHTS["answer"] * answer
+    )
 
 
 def _tools(trace: Trace) -> list[str]:

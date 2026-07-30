@@ -58,5 +58,6 @@
   ],
   "final_answer": "risk=low | open_cases=2",
   "status": "completed",
-  "adapter_id": "deterministic-reference"
+  "adapter_id": "deterministic-reference",
+  "usage": {}
 }

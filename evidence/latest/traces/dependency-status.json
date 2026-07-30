@@ -37,5 +37,6 @@
   ],
   "final_answer": "cache=healthy, database=healthy",
   "status": "completed",
-  "adapter_id": "deterministic-reference"
+  "adapter_id": "deterministic-reference",
+  "usage": {}
 }

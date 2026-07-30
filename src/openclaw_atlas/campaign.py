@@ -41,7 +41,9 @@ def run_campaign(
     cases: list[CampaignCase] = []
     agent = DeterministicAgent()
     for task in tasks:
-        if not task.expected_pass:
+        if not task.expected_pass or (
+            task.fault and task.fault.kind == FaultKind.permission_denied
+        ):
             continue
         for step in range(len(task.workflow)):
             for fault in faults:

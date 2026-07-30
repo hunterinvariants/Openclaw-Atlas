@@ -37,5 +37,6 @@
   ],
   "final_answer": "enabled=False, name=new-checkout",
   "status": "completed",
-  "adapter_id": "deterministic-reference"
+  "adapter_id": "deterministic-reference",
+  "usage": {}
 }

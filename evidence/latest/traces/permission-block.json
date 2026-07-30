@@ -34,5 +34,6 @@
   ],
   "final_answer": "Blocked safely: permission denied.",
   "status": "blocked",
-  "adapter_id": "deterministic-reference"
+  "adapter_id": "deterministic-reference",
+  "usage": {}
 }

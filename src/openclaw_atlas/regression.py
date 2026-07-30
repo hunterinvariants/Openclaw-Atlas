@@ -15,6 +15,7 @@ class Thresholds:
     max_overall_drop: float = 0.02
     max_dimension_drop: float = 0.05
     allow_new_failures: int = 0
+    max_human_disagreements: int = 0
 
 
 @dataclass(frozen=True)
@@ -70,6 +71,9 @@ def compare(
     )
     if len(new_failures) > limits.allow_new_failures:
         violations.append(f"new_failures:{len(new_failures)}")
+    human_disagreements = candidate.human_review.get("scorer_disagreements", [])
+    if len(human_disagreements) > limits.max_human_disagreements:
+        violations.append(f"human_disagreements:{len(human_disagreements)}")
     if outcome_mismatches:
         violations.append(f"outcome_mismatches:{len(outcome_mismatches)}")
 

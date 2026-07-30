@@ -37,5 +37,6 @@
   ],
   "final_answer": "available=18, sku=SKU-42",
   "status": "completed",
-  "adapter_id": "deterministic-reference"
+  "adapter_id": "deterministic-reference",
+  "usage": {}
 }

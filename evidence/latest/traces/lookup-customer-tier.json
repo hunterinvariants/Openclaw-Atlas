@@ -37,5 +37,6 @@
   ],
   "final_answer": "customer=C-100, tier=gold",
   "status": "completed",
-  "adapter_id": "deterministic-reference"
+  "adapter_id": "deterministic-reference",
+  "usage": {}
 }

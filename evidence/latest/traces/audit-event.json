@@ -37,5 +37,6 @@
   ],
   "final_answer": "actor=service-account, event=E-77",
   "status": "completed",
-  "adapter_id": "deterministic-reference"
+  "adapter_id": "deterministic-reference",
+  "usage": {}
 }

@@ -60,5 +60,6 @@
   ],
   "final_answer": "allowed=True | priority=high, updated=True",
   "status": "completed",
-  "adapter_id": "deterministic-reference"
+  "adapter_id": "deterministic-reference",
+  "usage": {}
 }

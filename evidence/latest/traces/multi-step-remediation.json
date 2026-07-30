@@ -60,5 +60,6 @@
   ],
   "final_answer": "job=J-2, state=failed | job=J-2, state=queued",
   "status": "completed",
-  "adapter_id": "deterministic-reference"
+  "adapter_id": "deterministic-reference",
+  "usage": {}
 }

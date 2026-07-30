@@ -4,6 +4,14 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.5.0] - 2026-07-30
+
+- Made correctness and tool-call budgets hard pass gates; controls use default thresholds.
+- Removed correct-argument disclosure from model error responses.
+- Added retry/backoff, bounded concurrency, checkpoints, resume, usage capture, and full sampling provenance.
+- Added reachable forbidden-tool distractors, prompt-injection faults, and deeper workflows.
+- Wired review labels into reports, SQLite ingestion, and regression gates.
+- Removed UTF-8 BOMs from all GitHub configuration and documented honest real-model evidence requirements.
 ## [0.4.0] - 2026-07-30
 
 ### Added

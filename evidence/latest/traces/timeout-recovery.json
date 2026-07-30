@@ -57,5 +57,6 @@
   ],
   "final_answer": "service=api, state=healthy",
   "status": "completed",
-  "adapter_id": "deterministic-reference"
+  "adapter_id": "deterministic-reference",
+  "usage": {}
 }

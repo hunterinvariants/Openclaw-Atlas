@@ -20,6 +20,7 @@ class FaultKind(StrEnum):
     malformed_response = "malformed_response"
     stale_data = "stale_data"
     permission_denied = "permission_denied"
+    injected_instruction = "injected_instruction"
 
 
 class WorkflowStep(StrictModel):
@@ -33,6 +34,7 @@ class FaultSpec(StrictModel):
     step: int = Field(ge=0)
     kind: FaultKind
     attempts: int = Field(default=1, ge=1)
+    payload: str | None = None
 
 
 class PolicySpec(StrictModel):
@@ -50,6 +52,7 @@ class TaskSpec(StrictModel):
     title: str
     prompt: str
     workflow: list[WorkflowStep]
+    tool_catalog: list[WorkflowStep] = Field(default_factory=list)
     expected_answer_contains: list[str]
     max_tool_calls: int = Field(ge=0)
     retry_limit: int = Field(default=1, ge=0, le=5)
@@ -77,6 +80,7 @@ class Trace(StrictModel):
     final_answer: str
     status: Literal["completed", "failed", "blocked"]
     adapter_id: str = "deterministic-reference"
+    usage: dict[str, int | float] = Field(default_factory=dict)
 
     def canonical_payload(self) -> str:
         return json.dumps(
@@ -114,6 +118,7 @@ class EvaluationReport(StrictModel):
     dimensions: dict[str, float]
     results: list[EvaluationResult]
     expected_outcomes_matched: int = 0
+    human_review: dict[str, Any] = Field(default_factory=dict)
 
     @classmethod
     def create(cls, dataset: str, results: list[EvaluationResult]) -> EvaluationReport:

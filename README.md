@@ -10,9 +10,9 @@ and tool behavior as canonical traces, injects reproducible failures, enforces
 policies, measures repeated-run stability, and gates changes against checked-in
 evidence.
 
-The baseline intentionally includes failures. Twenty positive tasks must pass;
+The baseline intentionally includes failures. Twenty-two positive tasks must pass;
 three negative controls must fail for correctness, efficiency, and safety. A run
-is valid only when all 23 observed outcomes match their declared expectations.
+is valid only when all 25 observed outcomes match their declared expectations.
 
 ## What is demonstrated
 
@@ -20,10 +20,10 @@ is valid only when all 23 observed outcomes match their declared expectations.
 - A deterministic reference adapter and a real OpenAI Responses tool-call loop
 - Canonical trace capture with adapter identity and cross-platform digest replay
 - N-run structural stability for stochastic adapters
-- Timeout, malformed-response, stale-data, and permission fault injection
+- Timeout, malformed-response, stale-data, permission, and injected-instruction fault injection
 - Policy enforcement in scoring, including unauthorized mutation detection
-- Five scoring dimensions with explicit pass thresholds and negative controls
-- Regression gates, SQLite/DuckDB trace queries, and 69-case fault campaigns
+- Five scoring dimensions with hard correctness, safety, and call-budget gates
+- Regression gates, SQLite/DuckDB trace queries, and systematic fault campaigns
 - Versioned human-review rubrics, JSONL labels, Cohen's kappa, and disagreement queues
 - Ruff formatting/linting, mypy, coverage, package builds, and pinned GitHub Actions
 
@@ -39,7 +39,7 @@ atlas run datasets/milestone-1.jsonl --evidence-dir evidence/candidate
 atlas compare evidence/latest/report.json evidence/candidate/report.json
 ```
 
-A successful run reports `expected-outcomes=23/23`, not a misleading all-green
+A successful run reports `expected-outcomes=25/25`, not a misleading all-green
 score. The generated report contains three visible expected FAIL rows.
 
 ## Run a real OpenAI adapter
@@ -56,13 +56,24 @@ atlas run datasets/milestone-1.jsonl \
   --model gpt-5-mini \
   --prompt tool-agent@2 \
   --repetitions 3 \
+  --concurrency 4 \
   --evidence-dir evidence/openai
 ```
 
 Adapter runs write `provenance.json` with the adapter, prompt and dataset
-digests, repetition count, and stability method. ATLAS does not compare a model
+digests, sampling parameters, retry/round limits, token usage, repetition count,
+and the exact stability weights. Runs checkpoint per task and resume from per-repetition
+traces after interruption. ATLAS does not compare a model
 trace with the reference agent; it compares repeated runs from the producing
 adapter.
+
+### Real-model evidence policy
+
+`datasets/openai-smoke.jsonl` is a five-task paid smoke suite. Real output belongs
+under `evidence/openai-<model>/` and must include its generated report, traces,
+and provenance. The repository never labels protocol-fake tests as real-model
+evidence. A maintainer must supply `OPENAI_API_KEY`; no credential was available
+for the v0.5.0 evidence refresh.
 
 ## Dataset and negative controls
 
@@ -100,12 +111,16 @@ coverage, package construction, expected-control outcomes, and baseline deltas.
 ```bash
 atlas review template datasets/milestone-1.jsonl rubrics/agent-qa-v1.json \
   reviews/alice.jsonl --reviewer alice
-atlas review analyze reviews/two-reviewers.jsonl
+atlas review analyze reviews/two-reviewers.jsonl --report evidence/latest/report.json
+atlas ingest evidence/latest/report.json evidence/latest/traces evidence/atlas.db \
+  --labels reviews/two-reviewers.jsonl
 ```
 
 Review labels are line-delimited JSON with task ID, reviewer, verdict, rubric
 version, criterion scores, and notes. Analysis requires exactly two reviewers
 and reports agreement, Cohen's kappa, and the task-level disagreement queue.
+With `--report`, human-vs-scorer disagreements become report and regression-gate
+inputs; `ingest --labels` stores the underlying labels in SQLite.
 
 ## Architecture and scope
 

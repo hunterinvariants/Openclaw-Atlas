@@ -45,5 +45,5 @@ def test_reference_digest_is_cross_platform_constant() -> None:
     trace = DeterministicAgent().run(TASKS["timeout-recovery"])
     assert (
         trace.digest
-        == "8633cf08c928e138c8e207c60866e0ec1d608149445eb4c4f092f9656c1c5751"
+        == "78c93dbe11bb773dd6240aa099e391ae2ead83c9c061c3e2e38c48e3fef0a56c"
     )

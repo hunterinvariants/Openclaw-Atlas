@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "openclaw-atlas"
-version = "0.4.0"
+version = "0.5.0"
 description = "Deterministic evaluation and QA framework for tool-using AI agents"
 readme = "README.md"
 requires-python = ">=3.11"

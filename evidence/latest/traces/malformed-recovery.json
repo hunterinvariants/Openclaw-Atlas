@@ -57,5 +57,6 @@
   ],
   "final_answer": "id=P-4, status=active",
   "status": "completed",
-  "adapter_id": "deterministic-reference"
+  "adapter_id": "deterministic-reference",
+  "usage": {}
 }
