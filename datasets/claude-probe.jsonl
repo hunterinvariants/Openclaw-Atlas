@@ -1,0 +1,1 @@
+{"schema_version":"1.0","id":"lookup-customer-tier","title":"Look up customer tier","prompt":"Find the support tier for customer C-100.","workflow":[{"tool":"crm.get_customer","arguments":{"id":"C-100"},"response":{"customer":"C-100","tier":"gold"}}],"expected_answer_contains":["customer=C-100","tier=gold"],"max_tool_calls":1,"tags":["lookup","crm"]}
