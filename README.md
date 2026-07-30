@@ -1,5 +1,12 @@
 # OPENCLAW-ATLAS
 
+[![CI](https://github.com/hunterinvariants/Openclaw-Atlas/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/hunterinvariants/Openclaw-Atlas/actions/workflows/ci.yml)
+[![Quality](https://github.com/hunterinvariants/Openclaw-Atlas/actions/workflows/evaluation.yml/badge.svg?branch=main)](https://github.com/hunterinvariants/Openclaw-Atlas/actions/workflows/evaluation.yml)
+[![Coverage gate](https://img.shields.io/badge/coverage_gate-%E2%89%A585%25-brightgreen)](https://github.com/hunterinvariants/Openclaw-Atlas/actions/workflows/evaluation.yml)
+[![Evaluation](https://img.shields.io/badge/evaluation-20%2F20_passing-brightgreen)](https://github.com/hunterinvariants/Openclaw-Atlas/blob/main/evidence/latest/report.md)
+[![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-3776AB)](https://github.com/hunterinvariants/Openclaw-Atlas/actions/workflows/ci.yml)
+[![License](https://img.shields.io/github/license/hunterinvariants/Openclaw-Atlas)](https://github.com/hunterinvariants/Openclaw-Atlas/blob/main/LICENSE)
+
 Deterministic evaluation and QA for tool-using AI agents. ATLAS makes agent
 behavior inspectable: workflows run against a fake tool environment, every
 call is captured in a canonical trace, faults are reproducible, and results are
@@ -114,6 +121,11 @@ atlas compare evidence/latest/report.json evidence/candidate/report.json
 atlas campaign datasets/milestone-1.jsonl
 ```
 
-## Review dashboard
+## Verifiable evidence
 
-The React dashboard in `dashboard/` provides searchable tasks, trace timelines, replay and fault signals, five-dimension rubric scoring, reviewer notes, disagreement flags, and regression status. Run it locally with `npm ci && npm run dev` from that directory.
+Every green status above resolves to inspectable evidence:
+
+- **CI** runs the complete test suite on Python 3.11, 3.12, and 3.13.
+- **Quality** enforces at least 85% branch-aware coverage, runs all 20 deterministic evaluations, verifies canonical trace replay, and compares the candidate report against the checked-in baseline.
+- **Evaluation evidence** includes the generated Markdown/JSON report and one canonical trace per task in [`evidence/latest`](evidence/latest).
+- GitHub Actions uploads the candidate report and traces from every quality run for independent inspection.

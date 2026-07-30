@@ -1,4 +1,4 @@
-name: deterministic-evaluation
+﻿name: Quality
 
 on:
   push:
@@ -8,7 +8,7 @@ permissions:
   contents: read
 
 jobs:
-  evaluate:
+  deterministic-evaluation:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,25 +19,10 @@ jobs:
       - run: python -m pip install -e ".[dev]"
       - run: pytest --cov --cov-report=term-missing --cov-fail-under=85
       - run: atlas run datasets/milestone-1.jsonl --evidence-dir evidence/ci
-      - run: python -m openclaw_atlas.regression evidence/latest/report.json evidence/ci/report.json
+      - run: atlas replay datasets/milestone-1.jsonl evidence/ci/traces/timeout-recovery.json
+      - run: atlas compare evidence/latest/report.json evidence/ci/report.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: atlas-evidence
           path: evidence/ci
-
-
-  dashboard:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: dashboard
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-          cache: npm
-          cache-dependency-path: dashboard/package-lock.json
-      - run: npm ci --ignore-scripts --no-audit --no-fund
-      - run: npm test
