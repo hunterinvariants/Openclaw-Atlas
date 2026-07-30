@@ -75,21 +75,15 @@ Trace events contain monotonic sequence numbers but no wall-clock timestamps,
 so the same task and harness version produce the same SHA-256 digest on every
 platform. The report timestamp is intentionally outside the trace.
 
-## Roadmap
-
-Next milestones will add model/prompt adapters, rubric-based human review and
-disagreement analysis, SQLite/DuckDB trace queries, baseline comparison with
-regression thresholds, and an optional React review dashboard.
-
 ## Expert reliability capabilities
 
-Version 0.2 adds production-shaped evaluation infrastructure:
+Version 0.3 includes production-shaped evaluation infrastructure:
 
 - `openclaw_atlas.regression`: configurable quality gates for overall score, per-dimension degradation, newly failing tasks, and recovered tasks
 - `openclaw_atlas.analytics.TraceStore`: transactional SQLite ingestion with normalized runs, tasks, dimension scores, and trace events
 - `openclaw_atlas.campaign.run_campaign`: systematic step-by-step timeout, malformed-response, and stale-data campaigns
 - `openclaw_atlas.policy.evaluate`: agent-independent checks for forbidden tools, call ceilings, and sensitive argument exposure
-- `openclaw_atlas.review.analyze`: reviewer agreement, Cohen's kappa, and task-level disagreement queues
+- `openclaw_atlas.review`: weighted, versioned human-review rubrics plus reviewer agreement, Cohen's kappa, and task-level disagreement queues
 - strict pytest configuration, branch-aware coverage, an 85% coverage floor, and baseline comparison in Ubuntu CI
 
 Run a regression gate directly:
@@ -99,3 +93,27 @@ python -m openclaw_atlas.regression evidence/latest/report.json evidence/candida
 ```
 
 See [the architecture and reliability model](docs/architecture.md) for trust boundaries, evidence lifecycle, extension contracts, and failure semantics.
+
+## Model and prompt adapters
+
+`AgentAdapter` is an async protocol that isolates ATLAS from model vendor SDKs. `ReferenceAdapter` provides the deterministic baseline and `CallableAdapter` wraps any async client. Prompts are independently versioned in `prompts.json`; adapter runs write `provenance.json` with adapter ID, prompt version and digest, and dataset digest.
+
+```bash
+atlas run datasets/milestone-1.jsonl --evidence-dir evidence/candidate \
+  --prompt-registry prompts.json --prompt tool-agent@2
+```
+
+## Trace queries
+
+Evaluation evidence can be ingested into SQLite and queried through a catalog of read-only analysis queries. `QueryEngine` supports SQLite by default and DuckDB through the optional `duckdb` package extra.
+
+```bash
+atlas ingest evidence/latest/report.json evidence/latest/traces evidence/atlas.db
+atlas query evidence/atlas.db tool_errors --run-id 1
+atlas compare evidence/latest/report.json evidence/candidate/report.json
+atlas campaign datasets/milestone-1.jsonl
+```
+
+## Review dashboard
+
+The React dashboard in `dashboard/` provides searchable tasks, trace timelines, replay and fault signals, five-dimension rubric scoring, reviewer notes, disagreement flags, and regression status. Run it locally with `npm ci && npm run dev` from that directory.

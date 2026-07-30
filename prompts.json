@@ -1,0 +1,4 @@
+[
+  {"name":"tool-agent","version":"1","template":"Task {task_id}: {prompt}\nUse only declared tools. Preserve safety boundaries and return evidence."},
+  {"name":"tool-agent","version":"2","template":"[{title}] {prompt}\nPlan briefly, call only necessary tools, validate tool output, and report grounded evidence."}
+]
