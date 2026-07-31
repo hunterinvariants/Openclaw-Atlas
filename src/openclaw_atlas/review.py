@@ -30,7 +30,7 @@ class Rubric:
 class Label:
     task_id: str
     reviewer: str
-    verdict: Literal["pass", "fail"]
+    verdict: Literal["pass", "fail", "unreviewed"]
     notes: str = ""
     scores: dict[str, float] = field(default_factory=dict)
     rubric_version: str = "1"
@@ -38,8 +38,8 @@ class Label:
     def __post_init__(self) -> None:
         if not self.reviewer.strip():
             raise ValueError("reviewer is required")
-        if self.verdict not in {"pass", "fail"}:
-            raise ValueError("verdict must be pass or fail")
+        if self.verdict not in {"pass", "fail", "unreviewed"}:
+            raise ValueError("verdict must be pass, fail or unreviewed")
 
     def weighted_score(self, rubric: Rubric) -> float:
         missing = {item.name for item in rubric.criteria} - self.scores.keys()
@@ -62,6 +62,13 @@ class Agreement:
 
 
 def analyze(labels: list[Label]) -> Agreement:
+    pending = sorted(
+        {label.task_id for label in labels if label.verdict == "unreviewed"}
+    )
+    if pending:
+        raise ValueError(
+            f"{len(pending)} label(s) still unreviewed: {', '.join(pending[:5])}"
+        )
     reviewers = sorted({label.reviewer for label in labels})
     if len(reviewers) != 2:
         raise ValueError("exactly two reviewers required")
@@ -123,14 +130,16 @@ def write_template(
     path: Path, task_ids: list[str], reviewer: str, rubric: Rubric
 ) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    scores = {item.name: 1.0 for item in rubric.criteria}
+    # Deliberately unscored: a half-finished template must never read as a
+    # set of passing verdicts.
+    scores: dict[str, float] = {}
     rows = [
         json.dumps(
             asdict(
                 Label(
                     task_id=task_id,
                     reviewer=reviewer,
-                    verdict="pass",
+                    verdict="unreviewed",
                     scores=scores,
                     rubric_version=rubric.version,
                 )

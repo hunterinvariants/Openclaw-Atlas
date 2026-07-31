@@ -220,10 +220,22 @@ def test_review_jsonl_round_trip_and_disagreement(tmp_path: Path) -> None:
     bob = tmp_path / "bob.jsonl"
     write_template(alice, tasks, "alice", rubric)
     write_template(bob, tasks, "bob", rubric)
-    bob_text = bob.read_text(encoding="utf-8").replace(
-        '"verdict": "pass"', '"verdict": "fail"', 1
+
+    # A freshly generated template is unlabelled and must not be scoreable.
+    with pytest.raises(ValueError, match="unreviewed"):
+        analyze(load_labels(alice) + load_labels(bob))
+
+    # Both reviewers now do the work; bob disagrees on task "a".
+    alice.write_text(
+        alice.read_text(encoding="utf-8").replace('"unreviewed"', '"pass"'),
+        encoding="utf-8",
     )
-    bob.write_text(bob_text, encoding="utf-8")
+    bob.write_text(
+        bob.read_text(encoding="utf-8")
+        .replace('"unreviewed"', '"fail"', 1)
+        .replace('"unreviewed"', '"pass"'),
+        encoding="utf-8",
+    )
     result = analyze(load_labels(alice) + load_labels(bob))
     assert result.shared_tasks == 2
     assert result.disagreements == ["a"]

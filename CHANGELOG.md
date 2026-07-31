@@ -4,6 +4,22 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+
+- Review templates no longer pre-fill a passing verdict and full scores. Two
+  untouched templates previously analyzed as perfect agreement with a Cohen's
+  kappa of 1.0, and a half-finished review silently counted its unlabelled rows
+  as passes. Templates now carry `verdict: "unreviewed"` with no scores, and
+  `analyze` refuses to run until every label has been decided.
+
+### Changed
+
+- Pinned GitHub Actions bumped: `checkout` v4 to v7.0.1, `setup-python` v5 to
+  v7.0.0, `upload-artifact` v4 to v7.0.1, `gh-action-pypi-publish` v1.13.0 to
+  v1.14.1.
+
 ## [0.7.0] - 2026-07-31
 
 ### Added

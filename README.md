@@ -199,6 +199,11 @@ that produced it and read the traces in `evidence/claude-opus-5/traces`:
 atlas review template datasets/claude-smoke.jsonl rubrics/agent-qa-v1.json   reviews/claude-opus-5.alice.jsonl --reviewer alice
 ```
 
+Generated templates carry `verdict: "unreviewed"` with no scores, and `analyze`
+refuses to run while any label is still in that state. Earlier versions
+pre-filled every row with a passing verdict, which meant two untouched
+templates reported perfect agreement and a Cohen's kappa of 1.0.
+
 `reviews/example-two-reviewers.jsonl` is synthetic and exists to exercise the
 analysis path. No human has yet labelled a real model run, so the
 `human_disagreements` regression gate has never fired on real data.
